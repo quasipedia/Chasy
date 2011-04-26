@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkWindow" id="window">
+    <property name="width_request">600</property>
+    <property name="title" translatable="yes">Chasy test and debug platform</property>
+    <signal name="destroy" handler="on_window_destroy"/>
+    <child>
+      <object class="GtkVBox" id="vbox1">
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkMenuBar" id="menubar1">
+            <property name="visible">True</property>
+            <property name="ubuntu_local">True</property>
+            <child>
+              <object class="GtkMenuItem" id="dump">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">_Dump</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu1">
+                    <property name="visible">True</property>
+                    <property name="ubuntu_local">True</property>
+                    <child>
+                      <object class="GtkMenuItem" id="dump_full">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+
+Includes numeric values in the form "HH:MM".</property>
+                        <property name="label" translatable="yes">_Full</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_dump_full_activate"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="dump_textonly">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+
+Phrases are NOT preceded by the HH:MM string.</property>
+                        <property name="label" translatable="yes">_Phrases only</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_dump_textonly_activate"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="dump_encoded">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+
+The phrases are "encoded" wich each unique word represented by an integer number. A legend is provided.</property>
+                        <property name="label" translatable="yes">_Encoded</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_dump_encoded_activate"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="analysis">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">_Analisys</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu2">
+                    <property name="visible">True</property>
+                    <property name="ubuntu_local">True</property>
+                    <child>
+                      <object class="GtkMenuItem" id="analysis_word_stats">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Provide statistics on the text used to output the time.</property>
+                        <property name="label" translatable="yes">_Text statistics</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_analysis_word_stats_activate"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="about">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">_About</property>
+                <property name="use_underline">True</property>
+                <signal name="select" handler="on_about_select"/>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="cyrillic">
+            <property name="visible">True</property>
+            <property name="ypad">8</property>
+            <property name="label" translatable="yes">Chasy</property>
+            <attributes>
+              <attribute name="weight" value="ultraheavy"/>
+              <attribute name="scale" value="2.000000"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox1">
+            <property name="visible">True</property>
+            <property name="homogeneous">True</property>
+            <child>
+              <object class="GtkLabel" id="hour_label">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes"> Hour
+(0-23)</property>
+                <attributes>
+                  <attribute name="weight" value="ultraheavy"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="hours">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">•</property>
+                <property name="adjustment">hour_adjustment</property>
+                <property name="snap_to_ticks">True</property>
+                <property name="wrap">True</property>
+                <signal name="value_changed" handler="on_hours_value_changed"/>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Minutes
+   (0-59)</property>
+                <attributes>
+                  <attribute name="weight" value="ultraheavy"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="minutes">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">•</property>
+                <property name="adjustment">minutes_adjustment</property>
+                <property name="snap_to_ticks">True</property>
+                <property name="wrap">True</property>
+                <signal name="value_changed" handler="on_minutes_value_changed"/>
+              </object>
+              <packing>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkStatusbar" id="statusbar1">
+            <property name="visible">True</property>
+            <property name="spacing">2</property>
+            <property name="homogeneous">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkAdjustment" id="hour_adjustment">
+    <property name="upper">23</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="minutes_adjustment">
+    <property name="upper">59</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAboutDialog" id="about_dialogue">
+    <property name="border_width">5</property>
+    <property name="type_hint">normal</property>
+    <property name="program_name">Chasy</property>
+    <property name="copyright" translatable="yes">© 2011 - Mac Ryan</property>
+    <property name="comments" translatable="yes">Development version</property>
+    <property name="website">http://multikultis.com</property>
+    <property name="license" translatable="yes">    Chasy - Word clock development platform
+    Copyright (C) 2011 Mac Ryan
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</property>
+    <property name="authors">Mac Ryan - quasipedia@gmail.com</property>
+    <signal name="response" handler="on_about_dialogue_response"/>
+    <signal name="delete_event" handler="on_about_dialogue_delete_event"/>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox1">
+        <property name="visible">True</property>
+        <property name="spacing">2</property>
+        <child>
+          <placeholder/>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area1">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="dump_window">
+    <property name="width_request">400</property>
+    <property name="height_request">200</property>
+    <signal name="delete_event" handler="on_dump_window_delete_event"/>
+    <child>
+      <object class="GtkVBox" id="vbox2">
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow1">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">automatic</property>
+            <property name="vscrollbar_policy">automatic</property>
+            <child>
+              <object class="GtkTextView" id="textview1">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="editable">False</property>
+                <property name="cursor_visible">False</property>
+                <property name="buffer">dump_buffer</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="close_dump_button">
+            <property name="label">gtk-close</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_close_dump_button_clicked"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkTextBuffer" id="dump_buffer"/>
+</interface>
