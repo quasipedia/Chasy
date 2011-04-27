@@ -44,17 +44,6 @@ Phrases are NOT preceded by the HH:MM string.</property>
                         <signal name="activate" handler="on_dump_textonly_activate"/>
                       </object>
                     </child>
-                    <child>
-                      <object class="GtkMenuItem" id="dump_encoded">
-                        <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
-
-The phrases are "encoded" wich each unique word represented by an integer number. A legend is provided.</property>
-                        <property name="label" translatable="yes">_Encoded</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_dump_encoded_activate"/>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
@@ -96,7 +85,7 @@ The phrases are "encoded" wich each unique word represented by an integer number
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="cyrillic">
+          <object class="GtkLabel" id="output_text">
             <property name="visible">True</property>
             <property name="ypad">8</property>
             <property name="label" translatable="yes">Chasy</property>
@@ -114,9 +103,9 @@ The phrases are "encoded" wich each unique word represented by an integer number
             <property name="visible">True</property>
             <property name="homogeneous">True</property>
             <child>
-              <object class="GtkLabel" id="hour_label">
+              <object class="GtkLabel" id="hours_label">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes"> Hour
+                <property name="label" translatable="yes"> Hours
 (0-23)</property>
                 <attributes>
                   <attribute name="weight" value="ultraheavy"/>
@@ -141,7 +130,7 @@ The phrases are "encoded" wich each unique word represented by an integer number
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="label2">
+              <object class="GtkLabel" id="minutes_label">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Minutes
    (0-59)</property>

@@ -9,14 +9,13 @@ Created on 14 Apr 2011
 import gtk
 import imp
 import utils
-import difflib
 from utils import debug
 
 class Logic(object):
     
     '''
     Contains all the logic needed for the program to run, except the language
-    specific ones, which are given by individual modules.
+    specific functionality, which is given by individual clock modules.
     '''
     
     def __init__(self, clock=None):
@@ -25,40 +24,7 @@ class Logic(object):
             clock_module = imp.load_source(clock, 'clocks/' + clock + '.py')
             self.clock = clock_module.Russian()
     
-    def test_order_on_rules(self, order, rules):
-        '''
-        Test if a given order of words is compliant with all the topographic
-        rules needed to formulate time sentences (phrases).
-        Uses a ruleset to perform the test.
-        '''
-        for word in order:
-            rule = rules[word]
-            r_index = utils.list_rindex(order, word)
-            l_index = order.index(word)
-            if order.count(word) < rule['min_rep']:
-                return False
-            if not rule['right_of'].issubset(order[:r_index]):
-                return False
-            if not rule['left_of'].issubset(order[l_index+1:]):
-                return False
-        return True
-    
-    def test_order_on_phrases(self, order, phrases):
-        '''
-        Test if a given order of words is compliant with all the topographic
-        rules needed to formulate time sentences (phrases).
-        Uses the actual phrases to perform the test.
-        '''
-        for phrase in phrases:
-            cursor = 0
-            for word in phrase:
-                try:
-                    cursor += order[cursor:].index(word) 
-                except ValueError as msg:
-                    return False
-        return True
-    
-    def get_dump(self, with_numbers=False):
+    def get_phrases_dump(self, with_numbers=False):
         '''
         Generate the dump of all the time phrases in a day (1440 for a minute-
         accurate clock). If 'with_numbers' is True, prepend a numeric 
@@ -78,128 +44,79 @@ class Logic(object):
         Returns an analysis of the complete set of time sentences.
         '''
         stats = []
-        phrase_list = self.get_dump()
+        phrase_list = self.get_phrases_dump()
         phrase_set = set(phrase_list)
         word_set = set(' '.join(phrase_list).split())
         n_phrases = len(phrase_list)
         n_unique_phrases = len(phrase_set)
         n_unique_words = len(word_set)
-        n_chars = sum([len(w) for w in word_set])
+        #len(unicode) would return bytesize of string, non number of chars
+        n_chars = sum([len(w.decode("utf-8")) for w in word_set])
         approx_board_size = utils.get_minimum_panel_size(n_chars)
         stats.append(("Number of sentences ", n_phrases)) 
         stats.append(("Number of unique sentences ", n_unique_phrases))
         stats.append(("Number of unique words ", n_unique_words))
         stats.append(("Number of chars to be displayed ", n_chars))
-        stats.append(("Minimum square size ", approx_board_size))
+        stats.append(("Minimum board size (X, Y, extra cells)", approx_board_size))
         col_width = max(map(len, [t for t, v in stats])) + 3
         for t, v in stats:
             print(t.ljust(col_width, '.') + ' %s') % str(v)
     
-    def get_order_rules(self, phrase_list):
+    def get_words_sequence(self, phrases=None):
         '''
-        Returns the order rules for every unique word in the list of time
-        phrases. For each word in the pool it is returned: 
-        - how many repetitions of it can be in the same sentence
-        - what words to be to the left of it
-        - what words to be to the right of it
+        Return a common supersequence to all the phrases.
+        The generation of the supersequence is done heuristically and there is
+        no guarantee the supersequence will be the shortest possible.
+        If no phrases are passed as parameters, all the phrases for the
+        currently active clock module will be used (so the supersequence will
+        be able to display the entire day on the clock). 
         '''
-        # Initialisation
-        phrase_set = set(phrase_list)
-        word_set = set(' '.join(phrase_list).split())
-        order_rules = {}
-        for word in word_set:
-            order_rules[word] = {'min_rep':0, 
-                                 'right_of':set(), 
-                                 'left_of':set()}
-        for phrase in phrase_set:
-            words = phrase.split()
-            for word in words:
-                # Update max repetitions count if necessary
-                rep = words.count(word)
-                if rep > order_rules[word]['min_rep']:
-                    order_rules[word]['min_rep'] = rep
-                # Add rules for left_of - ignore duplicates of self
-                for lo in words[words.index(word)+1:]:
-                    if lo != word:
-                        order_rules[word]['left_of'].add(lo)
-                # Add rules for right_of - ignore duplicates of self
-                # the slicing below is equivalent to "rindex" on strings
-                for ro in words[:utils.list_rindex(words, word)]:
-                    if ro != word:
-                        order_rules[word]['right_of'].add(ro)
-        return order_rules
-    
-    def get_order(self, order_rules):
-        '''
-        Return one of the possible orders of the word set so that all time 
-        sentences can be created with their words in the correct order.
-        '''
-        # Check if there are other conditions but plain repetition of a
-        # word in a sentence, that make duplicating a word indispensable
+        # 0. Generate a list of unique words
         debug()
-        duplicates = []
-        for w in order_rules:
-            debug(w, order_rules[w])
-            known_reps = order_rules[w]['min_rep'] 
-            if known_reps > 1:
-                for i in range(known_reps-1):
-                    duplicates.append(w)
-        circular_references = {}
-        for w in order_rules:
-            dups = order_rules[w]['left_of'].\
-                   intersection(order_rules[w]['right_of'])
-            if len(dups) != 0 and w not in duplicates:
-                circular_references[w] = dups
-        debug('CR:', circular_references)
-        # Creates new duplicates to overcome circular references.
-        # There might be several ways to resolve circular references, the
-        # programs starts by duplicating those words with the highest number
-        # of conflicting topological condistions.
-        if len(circular_references) > 0:
-            cr_per_word = sorted([(k, len(circular_references[k])) \
-                          for k in circular_references])
-            index = 0
-            while len(circular_references) > 0:
-                dup_word = cr_per_word[index][0]
-                duplicates.append(dup_word)
-                del circular_references[dup_word]
-                # the following line is needed as it's not possible to change
-                # the size of a dict during iteration on it
-                keys = [k for k in circular_references]
-                for k in keys:
-                    circular_references[k].discard(dup_word)
-                    if len(circular_references[k]) == 0:
-                        del circular_references[k]   
-                index += 1     
-        # Create order with bubble sorting     
-        order = [w for w in order_rules] + duplicates
-        while True:
-            changed = False
-            for index in range(len(order)-1):
-                a = order[index]
-                b = order[index+1]
-                # if they are identical words, there is no point swapping them
-                if a == b:
-                    continue
-                # if in the wrong place, swap
-                if a not in order_rules[b]['right_of']:
-                    order[index] = b 
-                    order[index+1] = a
-                    changed = True
-                # if in the right place, check for duplicates
-                elif a in order_rules[b]['left_of']:
-                    # find the rightmost duplicate and if too much to the left,
-                    # move it right at the right of "b"
-                    dup_index = utils.list_rindex(order, b)
-                    if dup_index < index+1:
-                        # "index+1" instead of "index+2" because popping the 
-                        # item will scale all items to the left of 1 unit
-                        order.insert(index+1, order.pop(dup_index))
-                        changed = True
-            if not changed:
-                break
-        debug('ORDER', order)
-        return order
+        if phrases == None:
+            phrases = self.get_phrases_dump()
+        words = set()
+        for phrase in phrases:
+            for word in phrase.split():
+                words.add(word)
+        # 1. Convert all words to 1-char-long symbols (words are unmodifiable)
+        #    and encode the phrases accordingly
+        symbol_to_word = {}
+        word_to_symbol = {}
+        for i, word in enumerate(words):
+            # 33 (!) is the first printable char and is saved for later use
+            symbol = unichr(34 + i)
+            symbol_to_word[symbol] = word
+            word_to_symbol[word] = symbol
+        codes = utils.convert(word_to_symbol, phrases)
+        # 2. Group all sentences in "families" of similar sentences
+        groups = utils.group_similar_phrases(codes)
+        for group in groups:
+            debug(utils.convert(symbol_to_word, group))
+        # Group together sentences with the same subsequence pattern
+        
+        # 2b. Start by the closest pair and find the longest common subsequence
+        # 2c. Add to the family until the original LCS can be used as the
+        #     common base between the family and the new sentence.
+        # 2d. Restart from 2a until all possible families have been generated.
+        # 3. Generate the sequence that contains all family members
+        # 4. Find the common sequence between all family sequences
+        # 5. Re-convert symbols into words
+        return []
+    
+    def test_sequence_against_phrases(self, sequence, phrases):
+        '''
+        Test if a given sequence of words can be used to generate all the 
+        time phrases. Return True for passed.
+        '''
+        for phrase in phrases:
+            cursor = 0
+            for word in phrase:
+                try:
+                    cursor += sequence[cursor:].index(word) 
+                except ValueError:
+                    return False
+        return True
     
     def get_text(self, hours, minutes):
         '''
@@ -226,7 +143,7 @@ class Gui(object):
         self.dump_window = self.builder.get_object("dump_window")
         self.dump_buffer = self.builder.get_object("dump_buffer")
         self.about_dialogue = self.builder.get_object("about_dialogue")
-        self.cyrillic = self.builder.get_object("cyrillic")
+        self.output_text = self.builder.get_object("output_text")
         
         self.hours = 0
         self.minutes = 0
@@ -247,17 +164,13 @@ class Gui(object):
     ##### MENU COMMANDS ######    
     
     def on_dump_full_activate(self, widget):
-        self.dump_buffer.set_text('\n'.join(self.logic.get_dump(True)))
+        self.dump_buffer.set_text('\n'.join(self.logic.get_phrases_dump(True)))
         self.dump_window.show()
 
     def on_dump_textonly_activate(self, widget):
-        self.dump_buffer.set_text('\n'.join(self.logic.get_dump(False)))
+        self.dump_buffer.set_text('\n'.join(self.logic.get_phrases_dump()))
         self.dump_window.show()
 
-    def on_dump_encoded_activate(self, widget):
-        self.dump_buffer.set_text("Encoded")
-        self.dump_window.show()
-    
     def on_analysis_word_stats_activate(self, widget):
         self.logic.get_phrases_analysis()
     
@@ -285,9 +198,27 @@ class Gui(object):
         
     def update_text(self):
         phrase = self.logic.get_text(self.hours, self.minutes)
-        self.cyrillic.set_text(phrase)
+        self.output_text.set_text(phrase)
 
 if __name__ == '__main__':
-    Gui('russian')
-    gtk.main()
+    l = Logic('russian')
+    phrases = ['it is five past one',
+               'it is one to two',
+               'it is two to three',
+               'it is three to four',
+               'it is four to five',
+               'it is five to six',
+               'it is four past seven',
+               'it is three past eight',
+               'it is two past nine',
+               'it is one past ten',
+               "it is eleven o'clock",
+               "it is twelve o'clock",
+               "it is one o'clock",
+               "it is two o'clock",
+               "it is three o'clock",
+               ]
+    l.get_words_sequence(phrases)
+#    Gui('russian')
+#    gtk.main()
     

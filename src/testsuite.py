@@ -10,10 +10,10 @@ import utils
 from utils import debug
 from main import Logic
 
-class LogicUtils(unittest.TestCase):
+class Utils(unittest.TestCase):
     
     '''
-    Test logic utils
+    Test the utils
     '''
     
     def testWordSelect(self):
@@ -27,7 +27,7 @@ class LogicUtils(unittest.TestCase):
                 word = utils.word_select(key, test_list)
                 self.assertEqual(word, test_list[keys])
         # Test exception
-        self.assertRaises(BaseException, utils.word_select, 'xxx', test_list)
+        self.assertRaises(Exception, utils.word_select, 'xxx', test_list)
 
     def testListsRightIndex(self):
         '''Finding last occurrence of an item in a list.'''
@@ -42,6 +42,54 @@ class LogicUtils(unittest.TestCase):
         # Test exceptions
         self.assertRaises(ValueError, utils.list_rindex, test_list, 'xxx')
 
+    def testConversion(self):
+        '''Multiple tests for the conversion function:
+        - Coding generates expected string.
+        - Coding works on both strings and list of strings.
+        '''        
+        single_phrase = 'The brave guy jumped over the fence'
+        multiple_phrases = ['The red herring swims',
+                            'The red herring sinks',
+                            'The blue cat swims']
+        keys = {'blue':'!', 'the':'£', 'brave':'$', 'sinks':'%', 'fence':'^', 
+                'jumped':'&', 'over':'*', 'swims':';', 'The':'@', 'cat':'#',
+                'herring':'~', 'guy':'=', 'red':'-'}
+        expected_phrase = '@ $ = & * £ ^'
+        expected_phrases = ['@ - ~ ;', '@ - ~ %', '@ ! # ;']
+        self.assertEqual(utils.convert(keys, single_phrase), expected_phrase)
+        self.assertEqual(utils.convert(keys, multiple_phrases), 
+                         expected_phrases)
+        # Test for wrong stuff type
+        self.assertRaises(Exception, utils.convert, keys, {'s':'No go'})
+        
+    def testPhraseGrouping(self):
+        '''Grouping similar phrases together.'''
+        phrases = ["it is five past one",
+               "it is one to two",
+               "it is two to three",
+               "it is three to four",
+               "it is four to five",
+               "it is five to six",
+               "it is four past seven",
+               "it is three past eight",
+               "it is two past nine",
+               "it is one past ten",
+               "it is eleven o'clock",
+               "it is twelve o'clock",
+               "it is one o'clock",
+               "it is two o'clock",
+               "it is three o'clock",
+               ]
+        expected_groups = [["it is one to two", "it is three to four", 
+                            "it is four to five", "it is five to six", 
+                            "it is two to three"]
+                           ["it is two o'clock", "it is one o'clock", 
+                            "it is eleven o'clock", "it is three o'clock", 
+                            "it is twelve o'clock"]
+                           ["it is one past ten", "it is five past one", 
+                            "it is two past nine", "it is four past seven", 
+                            "it is three past eight"]]
+        self.assertEqual(utils.group_similar_phrases(phrases), expected_groups)
 
 class Russian(unittest.TestCase):
     '''
@@ -87,7 +135,7 @@ class Russian(unittest.TestCase):
     
     def testPastHour(self):
         '''Generation of russian sentences for <30 mins FROM the round hour.'''
-        known_values = {(8, 22):'Сейчас двадцать два минуты девятого утра',
+        known_values = {(8, 22):'Сейчас двадцать две минуты девятого утра',
                         (9, 30):'Сейчас половина десятого утра',
                         (9, 15):'Сейчас четверть десятого утра'}
         for k in known_values:
@@ -99,85 +147,41 @@ class Analysis(unittest.TestCase):
     Test analysis of phrases.
     '''
     logic = Logic()
-    
-    def testOrderRules(self):
-        '''Generation of order rulesets.'''
-        phrase_list = ['red green blue',
-                       'red blue yellow',
-                       'red blue yellow',
-                       'red yellow red',
-                       'yellow green red']
-        order_rules = {'red':{'min_rep':2, 
-                               'right_of':set(('yellow', 'green')), 
-                               'left_of':set(('green', 'blue', 'yellow'))},
-                        'green':{'min_rep':1, 
-                                 'right_of':set(('red', 'yellow')), 
-                                 'left_of':set(('blue','red'))},
-                        'blue':{'min_rep':1, 
-                                'right_of':set(('red', 'green')), 
-                                'left_of':set(('yellow',))},
-                        'yellow':{'min_rep':1, 
-                                  'right_of':set(('red', 'blue')), 
-                                  'left_of':set(('red', 'green'))}}
-        tested_value = self.logic.get_order_rules(phrase_list)
-        self.assertEqual(tested_value, order_rules)
-        
+            
     def testOrderBasic(self):
-        '''Basic ordering test verified against known unique solution'''
-        phrase_list = ['aaa bbb ccc',
-                       'ddd eee fff',
-                       'ccc ddd']
+        '''Sequence generation against known solution'''
+        phrases = ['aaa bbb ccc',
+                   'ddd eee fff',
+                   'ccc ddd']
         order = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
-        rules = self.logic.get_order_rules(phrase_list)
-        tested_value = self.logic.get_order(rules)
-        self.assertEqual(tested_value, order)
+        self.assertEqual(self.logic.get_words_sequence(phrases), order)
 
     def testOrderTricky(self):
-        '''Stress test for the ordering algorithm:
+        '''Stress test for the sequence generation algorithm:
         - compare identical duplicate words (ccc)
         - create a duplicate word which is not explicitly used twice in the
           same sentence (eee)
         - sort alternate sequences (fff ggg fff ggg)
         '''
-        phrase_list = ['eee aaa bbb ccc', 'ccc ddd eee', 'ccc ccc',
+        phrases = ['eee aaa bbb ccc', 'ccc ddd eee', 'ccc ccc',
                        'eee fff ggg', 'ggg fff', 'ggg fff ggg']
-        possible_orders = [['eee', 'aaa', 'bbb', 'ccc', 'ccc', 'ddd',
-                            'eee', 'fff', 'ggg', 'fff', 'ggg',],
-                           ['eee', 'aaa', 'bbb', 'ccc', 'ccc', 'ddd', 
-                            'eee', 'ggg', 'fff', 'ggg', 'fff']]
-        rules = self.logic.get_order_rules(phrase_list)
-        order = self.logic.get_order(rules)
-        self.assertTrue(order in possible_orders)
+        seq = self.logic.get_words_sequence(phrases)
+        self.assertTrue(self.logic.test_sequence_against_phrases(seq, phrases))
         
-    def testOrderAdvanced(self):
-        '''Advanced ordering test verified against known ruleset.'''
-        phrase_sets = [['eee aaa bbb ccc',
-                        'ccc ddd eee',
-                        'ccc ccc ccc'],
-                       ['aaa bbb ccc ddd eee',
-                       'zzz ccc ddd',
-                       'bbb eee fff zzz',
-                       'aaa zzz xxx',
-                       'ccc ddd xxx']]
-        for set in phrase_sets:
-            #Test for success
-            rules = self.logic.get_order_rules(set)
-            order = self.logic.get_order(rules)
-            self.assertTrue(self.logic.test_order_on_rules(order, rules))
-            #Test for failure
-            order = ['eee', 'aaa', 'ccc', 'bbb', 'ccc', 'ddd', 'eee']
-            self.assertFalse(self.logic.test_order_on_rules(order, rules))
-                                
-    def testOrderUltimate(self):
-        '''Ultimate ordering test verified against initial phrases.'''
-        phrase_list = ['aaa bbb ccc ddd eee',
-                       'zzz ccc ddd',
-                       'bbb eee fff zzz',
-                       'aaa zzz xxx',
-                       'ccc ddd xxx']
-        ruleset = self.logic.get_order_rules(phrase_list)
-        order = self.logic.get_order(ruleset)
-        self.assertTrue(self.logic.test_order_on_phrases(order, phrase_list))
+    def testOrderLong(self):
+        '''Sequence generation with long list of long sentences.'''
+        phrases = ['the red carpet is unrolled on the floor',
+                   'a cat is walking on the carpet',
+                   'a cat is walking on a red floor',
+                   'the logic of sentence generation is a red herring',
+                   'no floor is too red not to get a herring carpet',
+                   'the cat of the castle made a sentence',
+                   'the logic of the herring is red',
+                   'a cat and a herring are on the floor',
+                   'no cat is on the carpet',
+                   'no logic can hold against ideology']
+        seq = self.logic.get_words_sequence(phrases)
+        self.assertTrue(self.logic.test_sequence_against_phrases(seq, phrases))
         
 if __name__ == "__main__":
     unittest.main()

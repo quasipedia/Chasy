@@ -146,8 +146,8 @@ class Russian(object):
                                                 self.words_hour))
             else:
                 output.append(self.cardinals_for_hours[hour%12+1])
-            # ONLY FOR 2, 3, 4 PM ADD WORD "часа"
-            if hour+1 in (14, 15, 16):
+            # ONLY FOR 2, 3, 4 PM and 3 AM ADD WORD "часа"
+            if hour+1 in (14, 15, 16, 3):
                 output.append(utils.word_select('to_two/three/four_hour', 
                                                 self.words_hour))
             # APPEND DAY PERIOD
@@ -169,7 +169,7 @@ class Russian(object):
                 output.append(utils.word_select(minutes, self.words_minutes))
             output.append(self.ordinals_genitive[hour%12+1])
             # ONLY BETWEEN 11:01 AND 11:29 USE "утра" INSTEAD OF "дня"
-            if hour == 11:
+            if hour == 11 and minutes != 30:
                 output.append(utils.word_select(hour, self.words_day_parts))
             else:
                 output.append(utils.word_select(hour+1, self.words_day_parts))
