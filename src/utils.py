@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Created on 25 Apr 2011
+Created on 14 Apr 2011
 
 This is a collection of helper functions used mostly in the Logic module
 of the project.
@@ -19,7 +19,7 @@ def debug(*stuff):
     debug_mode = True
     if debug_mode:
         strings = map(unicode, stuff)
-        print(('DEBUG>>>>> ' + ' '.join(strings)))
+        print(('>>>>>>>>>> DEBUG <<<<<<<<<<\n' + '\n'.join(strings)))
 
 def word_select(key, choices):
     '''
@@ -53,44 +53,57 @@ def get_minimum_panel_size(chars):
     extra_cells = x*y-chars
     return x, y, extra_cells
 
-def convert(keys, stuff):
-    '''
-    Encode or decode "stuff" on the basis of "keys", which is a dictionary
-    in the form {stuff_symbol : target_symbol}.
-    "stuff" can be a string or an iterable of strings.
-    '''
-    # convert a single string
-    convert_string = lambda k,s : ' '.join([k[w] for w in s.split()])
-    if type(stuff) in (str, unicode):
-        return convert_string(keys, stuff)
-    elif type(stuff) in (list, tuple, set):
-        return [convert_string(keys, s) for s in stuff]
-    else:
-        raise Exception('stuff must be either a string or a list of strings',
-                        str(type(stuff)))
+#def convert(keys, stuff):
+#    '''
+#    Encode or decode "stuff" on the basis of "keys", which is a dictionary
+#    in the form {stuff_symbol : target_symbol}.
+#    "stuff" can be a string or an iterable of strings.
+#    '''
+#    # convert a single string
+#    convert_string = lambda k,s : ' '.join([k[w] for w in s.split()])
+#    if type(stuff) in (str, unicode):
+#        return convert_string(keys, stuff)
+#    elif type(stuff) in (list, tuple, set):
+#        return [convert_string(keys, s) for s in stuff]
+#    else:
+#        raise Exception('stuff must be either a string or a list of strings',
+#                        str(type(stuff)))
         
-def group_similar_phrases(phrases):
+def group_similar_phrases(phrases, atomic_words=True):
     '''
     Group together phrases that have a common "positional rule". Return list.
-    e.g.: ["it is one to three", "it is two to to four", "it is nine to ten"] 
+    e.g.: ["it is one to three", "it is two to to four", "it is nine to ten"]
+    - atomic_words: whether comparison is between words or letters
+    - keep_blocks: whether return value should be a plain list of groups,
+    ===> Because of the grouping algorithm, any sentence in the same group
+    can be transformed into any other applying exactly the same operations.
     '''
+    # Unless we want to operate at a char level, we need to transform sentences
+    # into lists of words to make them "atomic" (i.e. "non- divisible")
+    if atomic_words:
+        for i, phrase in enumerate(phrases):
+            phrases[i] = tuple(phrase.split())
+        analyst = difflib.SequenceMatcher(None)
+    else:
+        analyst = difflib.SequenceMatcher(lambda x: x == ' ') # space as junk
+    # Make sure phrases are unique
+    phrases = set(phrases)
     # First group pairs that have the same proximity ratio and the same 
     # matching pattern (blocks + actual strings)...
-    analyst = difflib.SequenceMatcher(lambda x: x == ' ')
     groups = {}
     for a, b in itertools.combinations(phrases, 2):
         analyst.set_seqs(a, b)
-        ratio = int(math.floor(analyst.ratio()*1000))
-        blocks = tuple(analyst.get_matching_blocks()) #need hashable!
-        substrings = blocks_to_substrings(a, blocks)
-        key = (ratio, blocks, substrings)
+        ratio = int(math.floor(analyst.ratio()*1000)) #round has approx. errors
+        blocks = tuple(analyst.get_matching_blocks())[:-1]  #need hashable!
+        common_words = blocks_to_words(a, blocks)
+        key = (ratio, blocks, common_words)
         if key not in groups.keys():
             groups[key] = set()
         groups[key].add(a)
         groups[key].add(b)
     # Then eliminate multiple memberships of phrases to different families
-    # by giving priorities to families with higher ratio (and within those
-    # with the same ration, those with higher number of members)
+    # by giving priorities to families with higher ratio and within those 
+    # with the same ratio, to those with higher number of members)
     priority = [k for k in groups]
     priority.sort(key=lambda x: len(groups[x]), reverse=True) # sort by size
     priority.sort(key=lambda x: x[0], reverse=True)
@@ -99,24 +112,30 @@ def group_similar_phrases(phrases):
         groups[key] = groups[key].difference(assigned_phrases)
         assigned_phrases = assigned_phrases.union(groups[key])
     # Beautify the output removing keys and empty sets.
-    groups = sorted([group for k, group in groups.items() if len(group) != 0])
+    groups = [[' '.join(phrase) for phrase in group] 
+              for k, group in groups.items() if len(group) != 0]
     return groups
-    # Then, further verify 
-#    all_groups = []
-#    for k, pairs in scores.items():
-#        gg = transitive_affiliation(pairs)
-#        for g in gg:
-#            all_groups.append((k[0], g))
-#    return all_groups
 
-def blocks_to_substrings(a, blocks):
+def shortest_common_supersequence(phrases):
+    '''
+    Return the shortest common supersequence between phrases. Words are atomic.
+    '''
+    supersequence = []
+    phrases = [phrase.split() for phrase in phrases]
+    for phrase in phrases:
+        pass
+    return supersequence
+
+def blocks_to_words(a, blocks):
     '''
     Takes matching blocks and returns their intended fragment of string.
     '''
-    output = ''
-    for i, j, l in blocks:
-        output += a[i:i+l]
-    return output
+    # Tuples are necessary to make the output hashable (and therefore usable 
+    # as part of a dictionary key). 
+    output = []
+    for i, j, l in blocks:  #remove dummy block (library feature)
+        output.append(a[i:i+l])
+    return tuple(output)
 
 def transitive_affiliation(pairs):
     '''

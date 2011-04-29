@@ -6,12 +6,16 @@ Created on 14 Apr 2011
 '''
 
 import utils
+import baseclock
 
-class Russian(object):
+class Clock(baseclock.Clock):
     
     '''
-    Russian verbose clock
+    Russian verbose clock.
     '''
+    
+    __module_name__ = 'Verbose Russian'
+    __authors__ = 'Mac Ryan, Olga Andronova'
     
     def __init__(self):
         self.word_it_is = 'Сейчас'
@@ -100,21 +104,21 @@ class Russian(object):
                                   11:'одиннадцатого',
                                   12:'двенадцатого'}
 
-    def get_text(self, hour, minutes):
+    def get_time_phrase(self, hours, minutes):
 
         output = [self.word_it_is]
                 
         # O'CLOCK CASE
         if minutes == 0:
-            if hour == 12:
+            if hours == 12:
                 output.append(self.word_noon)
-            elif hour == 0:
+            elif hours == 0:
                 output.append(self.word_midnight)
             else:
                 output.append(self.word_o_clock)
-                output.append(self.cardinals_for_hours[hour%12])
-                output.append(utils.word_select(hour%12, self.words_hour))
-                output.append(utils.word_select(hour, self.words_day_parts))
+                output.append(self.cardinals_for_hours[hours%12])
+                output.append(utils.word_select(hours%12, self.words_hour))
+                output.append(utils.word_select(hours, self.words_day_parts))
         
         # <30 MINUTES TO FULL HOUR
         elif minutes > 30:
@@ -141,17 +145,17 @@ class Russian(object):
                     output.append(utils.word_select('gen_not_1', 
                                                     self.words_minutes))
             # ADD THE HOUR THAT WILL COME
-            if hour%12+1 == 1:
+            if hours%12+1 == 1:
                 output.append(utils.word_select('to_one_hour', 
                                                 self.words_hour))
             else:
-                output.append(self.cardinals_for_hours[hour%12+1])
+                output.append(self.cardinals_for_hours[hours%12+1])
             # ONLY FOR 2, 3, 4 PM and 3 AM ADD WORD "часа"
-            if hour+1 in (14, 15, 16, 3):
+            if hours+1 in (14, 15, 16, 3):
                 output.append(utils.word_select('to_two/three/four_hour', 
                                                 self.words_hour))
             # APPEND DAY PERIOD
-            output.append(utils.word_select(hour+1, self.words_day_parts))
+            output.append(utils.word_select(hours+1, self.words_day_parts))
         
         # MAX 30 MINUTES AFTER FULL HOUR
         elif minutes <= 30:
@@ -167,16 +171,15 @@ class Russian(object):
                 else:
                     output.append(self.cardinals_nominative[minutes])
                 output.append(utils.word_select(minutes, self.words_minutes))
-            output.append(self.ordinals_genitive[hour%12+1])
+            output.append(self.ordinals_genitive[hours%12+1])
             # ONLY BETWEEN 11:01 AND 11:29 USE "утра" INSTEAD OF "дня"
-            if hour == 11 and minutes != 30:
-                output.append(utils.word_select(hour, self.words_day_parts))
+            if hours == 11 and minutes != 30:
+                output.append(utils.word_select(hours, self.words_day_parts))
             else:
-                output.append(utils.word_select(hour+1, self.words_day_parts))
-                
+                output.append(utils.word_select(hours+1, self.words_day_parts))
         
-        # CATCHALL CASE [should never be used, helpful for debug]
+        # EXCEPTION
         else:
-            output = ('Unrecognised time --- ', str(hour), ':', str(minutes))
-
+            raise(Exception, ' '.join(('Unrecognised time --- ', 
+                                       str(hours), ':', str(minutes))))
         return ' '.join(output)

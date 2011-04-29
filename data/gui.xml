@@ -14,34 +14,49 @@
             <property name="visible">True</property>
             <property name="ubuntu_local">True</property>
             <child>
-              <object class="GtkMenuItem" id="dump">
+              <object class="GtkMenuItem" id="file">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">_Dump</property>
+                <property name="label" translatable="yes">_File</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="menu1">
+                  <object class="GtkMenu" id="menu3">
                     <property name="visible">True</property>
                     <property name="ubuntu_local">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="dump_full">
+                      <object class="GtkMenuItem" id="projects">
                         <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
-
-Includes numeric values in the form "HH:MM".</property>
-                        <property name="label" translatable="yes">_Full</property>
+                        <property name="label" translatable="yes">_Projects</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_dump_full_activate"/>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu4">
+                            <property name="visible">True</property>
+                            <property name="ubuntu_local">True</property>
+                            <child>
+                              <object class="GtkMenuItem" id="Save">
+                                <property name="visible">True</property>
+                                <property name="tooltip_text" translatable="yes">Save the current clockface project.</property>
+                                <property name="label" translatable="yes">_Save</property>
+                                <property name="use_underline">True</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="open">
+                                <property name="visible">True</property>
+                                <property name="tooltip_text" translatable="yes">Open a previously saved clockface project</property>
+                                <property name="label" translatable="yes">_Open</property>
+                                <property name="use_underline">True</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="dump_textonly">
+                      <object class="GtkMenuItem" id="modules">
                         <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
-
-Phrases are NOT preceded by the HH:MM string.</property>
-                        <property name="label" translatable="yes">_Phrases only</property>
+                        <property name="tooltip_text" translatable="yes">Switch between installed modules</property>
+                        <property name="label" translatable="yes">Modules</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_dump_textonly_activate"/>
                       </object>
                     </child>
                   </object>
@@ -49,33 +64,89 @@ Phrases are NOT preceded by the HH:MM string.</property>
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="analysis">
+              <object class="GtkMenuItem" id="text">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">_Analisys</property>
+                <property name="label" translatable="yes">_Text</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="menu2">
+                  <object class="GtkMenu" id="menu5">
                     <property name="visible">True</property>
                     <property name="ubuntu_local">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="analysis_word_stats">
+                      <object class="GtkMenuItem" id="dump">
                         <property name="visible">True</property>
-                        <property name="tooltip_text" translatable="yes">Provide statistics on the text used to output the time.</property>
-                        <property name="label" translatable="yes">_Text statistics</property>
+                        <property name="label" translatable="yes">_Dump</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_analysis_word_stats_activate"/>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu1">
+                            <property name="visible">True</property>
+                            <property name="ubuntu_local">True</property>
+                            <child>
+                              <object class="GtkMenuItem" id="dump_full">
+                                <property name="visible">True</property>
+                                <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+
+Includes numeric values in the form "HH:MM".</property>
+                                <property name="label" translatable="yes">_Full</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="on_dump_full_activate"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="dump_textonly">
+                                <property name="visible">True</property>
+                                <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+
+Phrases are NOT preceded by the HH:MM string.</property>
+                                <property name="label" translatable="yes">_Phrases only</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="on_dump_textonly_activate"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="analysis">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">_Analisys</property>
+                        <property name="use_underline">True</property>
+                        <child type="submenu">
+                          <object class="GtkMenu" id="menu2">
+                            <property name="visible">True</property>
+                            <property name="ubuntu_local">True</property>
+                            <child>
+                              <object class="GtkMenuItem" id="analysis_word_stats">
+                                <property name="visible">True</property>
+                                <property name="tooltip_text" translatable="yes">Provide statistics on the text used to output the time.</property>
+                                <property name="label" translatable="yes">_Text statistics</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="on_analysis_word_stats_activate"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
                 </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="clockface">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">_Clockface</property>
+                <property name="use_underline">True</property>
               </object>
             </child>
             <child>
               <object class="GtkMenuItem" id="about">
                 <property name="visible">True</property>
+                <property name="can_focus">True</property>
                 <property name="label" translatable="yes">_About</property>
                 <property name="use_underline">True</property>
-                <signal name="select" handler="on_about_select"/>
+                <signal name="activate" handler="on_about_activate"/>
               </object>
             </child>
           </object>
