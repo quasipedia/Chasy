@@ -53,21 +53,21 @@ def get_minimum_panel_size(chars):
     extra_cells = x*y-chars
     return x, y, extra_cells
 
-#def convert(keys, stuff):
-#    '''
-#    Encode or decode "stuff" on the basis of "keys", which is a dictionary
-#    in the form {stuff_symbol : target_symbol}.
-#    "stuff" can be a string or an iterable of strings.
-#    '''
-#    # convert a single string
-#    convert_string = lambda k,s : ' '.join([k[w] for w in s.split()])
-#    if type(stuff) in (str, unicode):
-#        return convert_string(keys, stuff)
-#    elif type(stuff) in (list, tuple, set):
-#        return [convert_string(keys, s) for s in stuff]
-#    else:
-#        raise Exception('stuff must be either a string or a list of strings',
-#                        str(type(stuff)))
+def get_min_avg_max(string_series, what, return_as_text=True):
+    '''
+    Return a tuple with the lengths of the shortest, longest, and average
+    string in the series. Length can be measured in words or characters. If
+    characters is selected, then spaces are ignored.
+    '''
+    if what not in ('chars', 'words'):
+        raise Exception("You can count either words or chars")
+    count_f = {'words':lambda x: len(x.split()),
+               'chars':lambda x: len(''.join(x.split()).decode("utf-8"))}
+    lengths = sorted([count_f[what](string) for string in string_series])
+    triplet = (lengths[1], sum(lengths)*1.0/len(lengths), lengths[-1])
+    if return_as_text == True:
+        triplet = "(%d, %.1f, %d)" % triplet
+    return triplet
         
 def group_similar_phrases(phrases, atomic_words=True):
     '''
@@ -133,22 +133,6 @@ def blocks_to_words(a, blocks):
     # Tuples are necessary to make the output hashable (and therefore usable 
     # as part of a dictionary key). 
     output = []
-    for i, j, l in blocks:  #remove dummy block (library feature)
+    for i, j, l in blocks:  #remove dummy block (difflib feature)
         output.append(a[i:i+l])
     return tuple(output)
-
-def transitive_affiliation(pairs):
-    '''
-    If a|b and b|c then a|c, so a|b|c.  
-    '''
-    groups = []
-    for a, b in pairs:
-        added = False
-        for group in groups:
-            if a in group or b in group:
-                group.add(a)
-                group.add(b)
-                added = True
-        if not added:
-            groups.append(set((a,b)))
-    return groups

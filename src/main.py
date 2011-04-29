@@ -16,7 +16,6 @@ class Gui(object):
     '''
 
     def __init__(self):
-        self.logic = logic.Logic()
         self.gui_file = "../data/gui.xml"
         
         self.builder = gtk.Builder()
@@ -26,10 +25,13 @@ class Gui(object):
         self.dump_window = self.builder.get_object("dump_window")
         self.dump_buffer = self.builder.get_object("dump_buffer")
         self.about_dialogue = self.builder.get_object("about_dialogue")
+        self.modules_menu = self.builder.get_object("modules")
         self.output_text = self.builder.get_object("output_text")
-        
+
         self.hours = 0
         self.minutes = 0
+
+        self.logic = logic.Logic(self.modules_menu, self.update_text)
         self.update_text()
         
         self.window.show_all()
