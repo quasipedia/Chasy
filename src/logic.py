@@ -10,7 +10,10 @@ import sys
 import utils
 import textwrap
 import gtk
-import gobject
+import itertools
+import difflib
+import math
+import time
 
 class Logic(object):
     
@@ -19,7 +22,12 @@ class Logic(object):
     specific functionality, which is given by individual clock modules.
     '''
     
-    def __init__(self, parent_menu, callback):
+    def __init__(self, parent_menu, callback, debug=False):
+        # The program hasn't run a supersequence heuristic just yet...
+        self.shortest_supersequence = None
+        # The debug mode of using the class is command-line only...
+        if debug == True:
+            return
         # This callback is used to signal the need for a screen refresh
         self.invoke_refresh = callback
         # Imports all available clock modules and organise a human-readable
@@ -47,15 +55,116 @@ class Logic(object):
         # Pick the first module of the list to start with
         self.clock = self.available_modules[initial_module].Clock()
         group.set_active(True)
-        
+ 
+    def __group_similar_phrases(self, phrases, atomic_words=True):
+        '''
+        Group together phrases that have a common "positional rule". Return 
+        list. Exemple: ["it is one to three", "it is two to to four", 
+        "it is nine to ten"]
+        - atomic_words: whether comparison is between words or letters
+        - keep_blocks: whether return value should be a plain list of groups,
+        '''
+        # Unless we want to operate at a char level, we need to transform 
+        # sentences into lists of words to make them "atomic" (i.e. 
+        # "non-divisible")
+        if atomic_words:
+            for i, phrase in enumerate(phrases):
+                print(i, phrase)
+                phrases[i] = tuple(phrase.split())
+            analyst = difflib.SequenceMatcher(None)
+        else:
+            analyst = difflib.SequenceMatcher(lambda x: x == ' ') # ' ' = junk
+        # Make sure phrases are unique
+        phrases = set(phrases)
+        # Progress monitor variables
+        total = utils.get_combination_number(len(phrases), 2)
+        current = 0
+        start = time.time()
+        # First group pairs that have the same proximity ratio and the same 
+        # matching pattern (blocks + actual strings)...
+        groups = {}
+        for a, b in itertools.combinations(phrases, 2):
+            current += 1
+            analyst.set_seqs(a, b)
+            # The rounding function with decimals makes approximation errors
+            # related to the floating point internal representation of nums
+            ratio = int(math.floor(analyst.ratio()*1000))
+            blocks = tuple(analyst.get_matching_blocks())[:-1]  #need hashable!
+            common_words = utils.blocks_to_words(a, blocks)
+            key = (ratio, blocks, common_words)
+            if key not in groups.keys():
+                groups[key] = set()
+            groups[key].add(a)
+            groups[key].add(b)
+            if current % 1000 == 0:
+                progress_fraction = float(current)/total
+                now = time.time()
+                time_left = (now-start)/progress_fraction*(1-progress_fraction)
+                print('Progress: %.2f    Time left: %d minutes and %d seconds' 
+                      % (progress_fraction*100, time_left/60, time_left%60))
+        # Then eliminate multiple memberships of phrases to different families
+        # by giving priorities to families with higher ratio and within those 
+        # with the same ratio, to those with higher number of members)
+        priority = [k for k in groups]
+        priority.sort(key=lambda x: len(groups[x]), reverse=True)
+        priority.sort(key=lambda x: x[0], reverse=True)
+        assigned_phrases = set()
+        for key in priority:
+            groups[key] = groups[key].difference(assigned_phrases)
+            assigned_phrases = assigned_phrases.union(groups[key])
+        # Beautify the output removing keys and empty sets.
+        groups = [[phrase for phrase in group] 
+                  for k, group in groups.items() if len(group) != 0]
+        return groups
+    
+    def __get_supersequence(self, phrases):
+        '''
+        Return the Shortest Common Supersequence between phrases. Atomic words.
+        '''
+        # The key of this passage and to perform substitutions in an ordered
+        # way. Because of the nature of the program, it is highly possible that
+        # substitutions in phrases regard numbers. Creating supersequences
+        # where inserted numbers follow the same pattern maximise the 
+        # similitude between supersequences of different families.
+        #
+        # Because of the family creation algorithm, we know that any
+        # transformation between two phrases of the same family follow
+        # exactly the same pattern. Furthermore we know that the matching
+        # blocks on each phrase are in the SAME place.
+        print('PHRASES', phrases[0], phrases[1])
+        analyser = difflib.SequenceMatcher(None, phrases[0], phrases[1])
+        mblocks = analyser.get_matching_blocks()[:-1]
+        print('MBLOCKS', mblocks)
+        equal_positions = []
+        for i, j, l in mblocks:
+            for n in range(i, i+l):
+                equal_positions.append(n)
+        print('EQ POSITIONS', equal_positions)
+        supersequence = []
+        cursor = 0
+        while cursor < len(phrases[0]):
+            if cursor in equal_positions:
+                supersequence.append(phrases[0][cursor])
+            else:
+                for alternative in utils.get_alternatives(phrases, cursor):
+                    supersequence.append(alternative)
+            cursor += 1
+        print('SUPER', supersequence)
+        return supersequence
+           
     def switch_clock(self, widget, clock_name):
+        '''
+        Swap between different clock modules.
+        Refresh the screen and clear cached values as needed.
+        '''
         if widget.get_active():
             self.clock = self.available_modules[clock_name].Clock()
             try:
                 self.invoke_refresh()
+            # If invoked during the __init__, the callback won't work!! So...
             except AttributeError:
-                # If invoked during the __init__, the callback won't work!!
                 pass
+            self.shortest_supersequence = None
     
     def get_phrases_analysis(self):
         '''
@@ -86,10 +195,11 @@ class Logic(object):
         chars_per_word = utils.get_min_avg_max(word_set, 'chars')
         stats.append(("Chars per word (min, avg, max)", chars_per_word))
         chars_per_sentence = utils.get_min_avg_max(phrase_set, 'chars')
-        stats.append(("Chars per sentence (min, avg, max)", chars_per_sentence))
+        stats.append(("Chars per sentence (min, avg, max)", 
+                      chars_per_sentence))
 
         stats.append(("MATRIX SIZE", ''))        
-        approx_board_size = utils.get_minimum_panel_size(n_chars)
+        approx_board_size = self.get_minimum_panel_size(n_chars)
         stats.append(("Minimum board size (X, Y, extra cells)", 
                       approx_board_size))
 
@@ -110,7 +220,59 @@ class Logic(object):
         impossible to go. However it is possible that the actual matrix will 
         need to be larger to accommodate for logical and spatial needs.'''
         print('\n' + textwrap.fill(textwrap.dedent(disclaimer), col_width))
-            
-    def get_time_phrase(self, hours, minutes):
-        return self.clock.get_time_phrase(hours, minutes)
+
+    def get_minimum_panel_size(self, chars):
+        '''
+        Return the closest panel size to a perfect square needed to contain 
+        chars. (Does NOT consider the need for non-truncating words)
+        '''
+        root = int(math.sqrt(chars))
+        if root**2 >= chars:
+            x, y = root
+        elif (root+1)*root >= chars:
+            x, y = root+1, root
+        else:
+            x, y = root+1, root+1
+        extra_cells = x*y-chars
+        return x, y, extra_cells
     
+    def get_sequence(self, phrases=None, force_rerun=False):
+        '''
+        Return a common supersequence to all the phrases.
+        The generation of the supersequence is done heuristically and there 
+        is no guarantee the supersequence will be the shortest possible.
+        If no phrases are passed as parameters, all the phrases for the
+        currently active clock module will be used (so the supersequence 
+        will be able to display the entire day on the clock). 
+        '''
+        # It's a long job! If already down, don't re-do it unless specifically
+        # told so!
+        if self.shortest_supersequence and force_rerun == False:
+            return self.shortest_supersequence
+        # No phrases means... all phrases!!!
+        if phrases == None:
+            phrases = self.clock.get_phrases_dump()
+        # Group all sentences in "families" of similar sentences and
+        # find the shortest supersequence for each family. Repeat until
+        # only one sentence is left.
+        while len(phrases) > 1:
+            families = self.__group_similar_phrases(phrases)
+            print('FAMILIES:', families)
+            phrases = []
+            for family in families:
+                phrases.append(self.__get_supersequence(family))
+        return phrases[0]
+
+    def test_sequence_against_phrases(self, sequence, phrases):
+        '''
+        Test if a given sequence of words can be used to generate all the 
+        time phrases. Return True for passed.
+        '''
+        for phrase in phrases:
+            cursor = 0
+            for word in phrase:
+                try:
+                    cursor += sequence[cursor:].index(word) 
+                except ValueError:
+                    return False
+        return True

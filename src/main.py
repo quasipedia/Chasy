@@ -84,10 +84,14 @@ class Gui(object):
         gtk.main_quit()
         
     def update_text(self):
-        phrase = self.logic.get_time_phrase(self.hours, self.minutes)
+        phrase = self.logic.clock.get_time_phrase(self.hours, self.minutes)
         self.output_text.set_text(phrase)
 
 if __name__ == '__main__':
-    Gui()
-    gtk.main()
-    
+    import clocks.fiveminutesenglish
+    c = clocks.fiveminutesenglish.Clock()
+    l = logic.Logic(None, None, True)  #debug configuration
+    l.clock = c
+    l.get_sequence()
+#    Gui()
+#    gtk.main()

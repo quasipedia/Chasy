@@ -8,6 +8,12 @@ Created on 14 Apr 2011
 import utils
 
 class Clock(object):
+    
+    def get_time_phrase(self, hours, minutes):
+        '''
+        Placeholder method that should ALWAYS be overridden by clock modules.
+        '''
+        return 'ERROR: No module installed'
         
     def get_phrases_dump(self, with_numbers=False):
         '''
@@ -24,38 +30,3 @@ class Clock(object):
                 phrases.append(phrase + self.get_time_phrase(h, m))
         return phrases
     
-    def get_sequence(self, phrases=None):
-        '''
-        Return a common supersequence to all the phrases.
-        The generation of the supersequence is done heuristically and there is
-        no guarantee the supersequence will be the shortest possible.
-        If no phrases are passed as parameters, all the phrases for the
-        currently active clock module will be used (so the supersequence will
-        be able to display the entire day on the clock). 
-        '''
-        # 2. Group all sentences in "families" of similar sentences
-        groups = utils.group_similar_phrases(phrases)
-        utils.debug(*groups)
-        for phrase_list in groups:
-            utils.debug(utils.shortest_common_supersequence(phrase_list))
-        return []
-    
-    def test_sequence_against_phrases(self, sequence, phrases):
-        '''
-        Test if a given sequence of words can be used to generate all the 
-        time phrases. Return True for passed.
-        '''
-        for phrase in phrases:
-            cursor = 0
-            for word in phrase:
-                try:
-                    cursor += sequence[cursor:].index(word) 
-                except ValueError:
-                    return False
-        return True
-    
-    def get_time_phrase(self, hours, minutes):
-        '''
-        Placeholder method.
-        '''
-        return 'Load a module (or a project) to start working with Chasy.'
