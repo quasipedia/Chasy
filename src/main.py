@@ -88,11 +88,13 @@ class Gui(object):
         self.output_text.set_text(phrase)
 
 if __name__ == '__main__':
-    import clocks.fiveminutesenglish
-    c = clocks.fiveminutesenglish.Clock()
+    import clocks.verboserussian
+    c = clocks.verboserussian.Clock()
     l = logic.Logic(None, None, True)  #debug configuration
     l.clock = c
-    print(l.get_sequence())
+    seq = l.get_sequence()
+    print(len(seq.split()), seq)
+    print(l.test_sequence_against_phrases(seq, l.clock.get_phrases_dump()))
     exit()
     Gui()
     gtk.main()

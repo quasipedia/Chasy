@@ -378,11 +378,12 @@ class Logic(object):
         Test if a given sequence of words can be used to generate all the 
         time phrases. Return True for passed.
         '''
+        sequence = sequence.split()
         for phrase in phrases:
             cursor = 0
-            for word in phrase:
+            for word in phrase.split():
                 try:
-                    cursor += sequence[cursor:].index(word) 
+                    cursor += sequence[cursor:].index(word)
                 except ValueError:
                     return False
         return True
