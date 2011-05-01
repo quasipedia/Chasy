@@ -53,13 +53,16 @@ class Clock(baseclock.Clock):
                      30:'half'}
 
     def get_time_phrase(self, hours, minutes):
+        approx = lambda x: int(round(x/5.0) * 5)
+        minutes = approx(minutes)
         words = ["It", "is"]
         if 0 < minutes < 31:
-            words.append(self.nums[minutes/5*5])
+            words.append(self.nums[minutes])
             words.append("past")
         elif minutes > 30:
-            words.append(self.nums[(60-minutes)/5*5])
+            words.append(self.nums[60-minutes])
             words.append("to")
+            hours += 1
         words.append(self.nums[hours%12])
         if minutes == 0:
             words.append("o'clock")

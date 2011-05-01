@@ -78,3 +78,10 @@ def get_combination_number(pool_size, sample_size):
     '''
     f = lambda x: math.factorial(x)
     return f(pool_size)/(f(sample_size)*f(pool_size - sample_size))
+
+def check_all_same_lenght(phrases):
+    '''
+    Check if all the phrases in the sequence have the same length.
+    '''
+    ll = [len(phrase) for phrase in phrases]
+    return max(ll) == min(ll)

@@ -60,6 +60,7 @@ class Clock(baseclock.Clock):
         elif minutes > 30:
             words.append(self.nums[60-minutes])
             words.append("to")
+            hours += 1
         words.append(self.nums[hours%12])
         if minutes == 0:
             words.append("o'clock")

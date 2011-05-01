@@ -56,7 +56,7 @@ class Logic(object):
         self.clock = self.available_modules[initial_module].Clock()
         group.set_active(True)
  
-    def __group_similar_phrases(self, phrases, atomic_words=True):
+    def __get_families(self, phrases, atomic_words=True):
         '''
         Group together phrases that have a common "positional rule". Return 
         list. Exemple: ["it is one to three", "it is two to to four", 
@@ -69,11 +69,10 @@ class Logic(object):
         # "non-divisible")
         if atomic_words:
             for i, phrase in enumerate(phrases):
-                print(i, phrase)
                 phrases[i] = tuple(phrase.split())
-            analyst = difflib.SequenceMatcher(None)
+            analyser = difflib.SequenceMatcher(None)
         else:
-            analyst = difflib.SequenceMatcher(lambda x: x == ' ') # ' ' = junk
+            analyser = difflib.SequenceMatcher(lambda x: x == ' ') # ' ' = junk
         # Make sure phrases are unique
         phrases = set(phrases)
         # Progress monitor variables
@@ -85,11 +84,16 @@ class Logic(object):
         groups = {}
         for a, b in itertools.combinations(phrases, 2):
             current += 1
-            analyst.set_seqs(a, b)
+            # No same length = No same family
+            if len(a) != len(b):
+                # Nonsense key values to make it unique
+                groups[(0, (a, b), 'skip')] = set((a, b)) 
+                continue
+            analyser.set_seqs(a, b)
             # The rounding function with decimals makes approximation errors
             # related to the floating point internal representation of nums
-            ratio = int(math.floor(analyst.ratio()*1000))
-            blocks = tuple(analyst.get_matching_blocks())[:-1]  #need hashable!
+            ratio = int(math.floor(analyser.ratio()*1000))
+            blocks = tuple(analyser.get_matching_blocks())[:-1]  #need hashable!
             common_words = utils.blocks_to_words(a, blocks)
             key = (ratio, blocks, common_words)
             if key not in groups.keys():
@@ -106,8 +110,8 @@ class Logic(object):
         # by giving priorities to families with higher ratio and within those 
         # with the same ratio, to those with higher number of members)
         priority = [k for k in groups]
-        priority.sort(key=lambda x: len(groups[x]), reverse=True)
-        priority.sort(key=lambda x: x[0], reverse=True)
+        priority.sort(key=lambda x: len(groups[x]), reverse=True) #size
+        priority.sort(key=lambda x: x[0], reverse=True) #affinity
         assigned_phrases = set()
         for key in priority:
             groups[key] = groups[key].difference(assigned_phrases)
@@ -117,9 +121,10 @@ class Logic(object):
                   for k, group in groups.items() if len(group) != 0]
         return groups
     
-    def __get_supersequence(self, phrases):
+    def __get_family_supersequence(self, phrases):
         '''
         Return the Shortest Common Supersequence between phrases. Atomic words.
+        Works only for families in which all phrases have the same length.
         '''
         # The key of this passage and to perform substitutions in an ordered
         # way. Because of the nature of the program, it is highly possible that
@@ -131,15 +136,12 @@ class Logic(object):
         # transformation between two phrases of the same family follow
         # exactly the same pattern. Furthermore we know that the matching
         # blocks on each phrase are in the SAME place.
-        print('PHRASES', phrases[0], phrases[1])
         analyser = difflib.SequenceMatcher(None, phrases[0], phrases[1])
         mblocks = analyser.get_matching_blocks()[:-1]
-        print('MBLOCKS', mblocks)
         equal_positions = []
         for i, j, l in mblocks:
             for n in range(i, i+l):
                 equal_positions.append(n)
-        print('EQ POSITIONS', equal_positions)
         supersequence = []
         cursor = 0
         while cursor < len(phrases[0]):
@@ -150,8 +152,43 @@ class Logic(object):
                     supersequence.append(alternative)
             cursor += 1
         print('SUPER', supersequence)
-        return supersequence
-           
+        return ' '.join(supersequence)
+
+    def __get_general_supersequence(self, phrases):
+        '''
+        Return a supersequence for a sentences that do not necessarily
+        resemble too much.
+        '''
+        phrases = [phrase.split() for phrase in phrases]
+        analyser = difflib.SequenceMatcher()
+        print("ENTER", phrases)
+        while len(phrases) > 1:
+            # Find the closest pair
+            closest = None
+            for a, b in itertools.combinations(phrases, 2):
+                analyser.set_seqs(a, b)
+                ratio = analyser.ratio()
+                if closest == None or ratio > closest[0]:
+                    closest = (ratio, a, b)
+            # Remove it from the pool
+            phrases.remove(closest[1])
+            phrases.remove(closest[2])
+            # merge the two: lengthy but safer, this works by adapting one
+            # code at a time, and then re-performing the analysis until no
+            # other codes but "equal" or "remove".
+            while True:
+                insertion = False
+                analyser.set_seqs(closest[1], closest[2])
+                for code, aa, az, ba, bz in analyser.get_opcodes():
+                    if code in ('insert', 'replace'):
+                        closest[1].insert(az, closest[2][ba:bz])
+                        insertion = True
+                        break  #not replacing but inserting screws up indexes!
+                if insertion == False:
+                    phrases.append(closest[1])
+        print('EXIT', phrases)
+        return phrases[0]
+
     def switch_clock(self, widget, clock_name):
         '''
         Swap between different clock modules.
@@ -254,14 +291,23 @@ class Logic(object):
             phrases = self.clock.get_phrases_dump()
         # Group all sentences in "families" of similar sentences and
         # find the shortest supersequence for each family. Repeat until
-        # only one sentence is left.
-        while len(phrases) > 1:
-            families = self.__group_similar_phrases(phrases)
+        # families are no longer possible
+        while True:
+            families = self.__get_families(phrases)
             print('FAMILIES:', families)
             phrases = []
             for family in families:
-                phrases.append(self.__get_supersequence(family))
-        return phrases[0]
+                no_more_families = True
+                if len(family) > 1 and utils.check_all_same_lenght(family):
+                    phrases.append(self.__get_family_supersequence(family))
+                    no_more_families = False
+                else:
+                    phrases.append(' '.join(family[0]))
+            if no_more_families:
+                break
+        # Do the last merging between sequences that aren't anymore relatives
+        print('END OF FAMILIES', phrases)
+        return self.__get_general_supersequence(phrases)
 
     def test_sequence_against_phrases(self, sequence, phrases):
         '''

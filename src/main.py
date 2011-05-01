@@ -93,5 +93,6 @@ if __name__ == '__main__':
     l = logic.Logic(None, None, True)  #debug configuration
     l.clock = c
     l.get_sequence()
-#    Gui()
-#    gtk.main()
+    exit()
+    Gui()
+    gtk.main()
