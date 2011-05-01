@@ -5,9 +5,19 @@ Created on 14 Apr 2011
 @author: mac
 '''
 
-import utils
-
 class Clock(object):
+
+    def __word_select(self, key, choices):
+        '''
+        Help method to select a given word in a dictionary in which keys are
+        tuples. Example usage:
+            minute_words = {1:'minute', tuple(range(2, 60):'minutes'}
+            self.__word_select(4, minute_words)
+        '''
+        for keys, value in choices.iteritems():
+            if key in keys:
+                return value
+        raise Exception("Key out of range: " + str(key))    
     
     def get_time_phrase(self, hours, minutes):
         '''

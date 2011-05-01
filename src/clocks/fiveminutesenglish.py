@@ -53,13 +53,20 @@ class Clock(baseclock.Clock):
                      30:'half'}
 
     def get_time_phrase(self, hours, minutes):
+        '''
+        Return the sentence meaning "it's hours:minute".
+        This method is the only method to make a module for Chasy.
+        '''
         approx = lambda x: int(round(x/5.0) * 5)
         minutes = approx(minutes)
+        if minutes == 60:
+            minutes = 0
+            hours += 1
         words = ["It", "is"]
         if 0 < minutes < 31:
             words.append(self.nums[minutes])
             words.append("past")
-        elif minutes > 30:
+        elif 60 > minutes > 30:
             words.append(self.nums[60-minutes])
             words.append("to")
             hours += 1

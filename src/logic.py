@@ -7,13 +7,42 @@ Created on 14 Apr 2011
 
 import glob
 import sys
-import utils
 import textwrap
 import gtk
 import itertools
 import difflib
 import math
 import time
+import utils
+
+class ExtendedSequenceMatcher(difflib.SequenceMatcher):
+
+    '''
+    This class adds a couple of test methods to the standard difflib one.
+    '''
+    
+    def are_isomorphic(self):
+        '''
+        Check if the transformation between A and B is the same of the
+        transformation between B and A and if such transformation only 
+        includes replacements.
+        - Return False in case of A and B not being isomorphic
+        - Return a tuple (ratio, matching_seqs, opcodes) if A and B are 
+          isomorphic. All couple of isomorphic sentences that generate the same 
+          tuple are isomorphic between themselves.
+        '''
+        if len(self.a) != len(self.b):
+            return False
+        matching_seqs = []
+        codes = self.get_opcodes()
+        for code in codes:
+            if code[0] not in ('replace', 'equal'):
+                return False
+            if code[1:3] != code[3:5]:
+                return False
+            if code[0] == 'equal':
+                matching_seqs.append(self.a[code[1]:code[2]])
+        return (self.ratio(), tuple(matching_seqs), tuple(codes))
 
 class Logic(object):
     
@@ -55,53 +84,86 @@ class Logic(object):
         # Pick the first module of the list to start with
         self.clock = self.available_modules[initial_module].Clock()
         group.set_active(True)
+    
+    def __get_min_avg_max(self, string_series, what, return_as_text=True):
+        '''
+        Return a tuple with the lengths of the shortest, longest, and average
+        string in the series. Length can be measured in words or characters. If
+        characters is selected, then spaces are ignored.
+        '''
+        if what not in ('chars', 'words'):
+            raise Exception("You can count either words or chars")
+        count_f = {'words':lambda x: len(x.split()),
+                   'chars':lambda x: len(''.join(x.split()).decode("utf-8"))}
+        lengths = sorted([count_f[what](string) for string in string_series])
+        triplet = (lengths[1], sum(lengths)*1.0/len(lengths), lengths[-1])
+        if return_as_text == True:
+            triplet = "(%d, %.1f, %d)" % triplet
+        return triplet
+    
+    def __get_alternatives(self, phrases, position):
+        '''
+        Return an ordered list of all the different unique words (sorted) that
+        are present in "phrases" at position "position".
+        '''
+        return sorted(set([phrase[position] for phrase in phrases]))
+    
+    def __get_combination_number(self, pool_size, sample_size):
+        '''
+        Return the number of sample_size big combinations without repetition that
+        can be formed from a pool of pool_size).
+        '''
+        f = lambda x: math.factorial(x)
+        return f(pool_size)/(f(sample_size)*f(pool_size - sample_size))
+    
+    def __get_orphans(self, phrases, families):
+        '''
+        Return the list of phrases which are not present in the family tree.
+        (phrases is list, and families is list of lists) 
+        '''
+        phrases = list(set(phrases))  #ensure no duplicates
+        for family in families:
+            for phrase in family:
+                try:
+                    phrases.remove(phrase)
+                except ValueError:  #in case phrase is not there...
+                    pass
+        return phrases
  
-    def __get_families(self, phrases, atomic_words=True):
+    def __get_isomorphic_families(self, phrases):
         '''
-        Group together phrases that have a common "positional rule". Return 
-        list. Exemple: ["it is one to three", "it is two to to four", 
-        "it is nine to ten"]
-        - atomic_words: whether comparison is between words or letters
-        - keep_blocks: whether return value should be a plain list of groups,
+        Group together isomorphic sequences. That means that sentence A can 
+        be transformed in sentence B by applying the same opcodes needed to 
+        transform B into A. Return a list of lists.
         '''
-        # Unless we want to operate at a char level, we need to transform 
-        # sentences into lists of words to make them "atomic" (i.e. 
-        # "non-divisible")
-        if atomic_words:
-            for i, phrase in enumerate(phrases):
-                phrases[i] = tuple(phrase.split())
-            analyser = difflib.SequenceMatcher(None)
-        else:
-            analyser = difflib.SequenceMatcher(lambda x: x == ' ') # ' ' = junk
         # Make sure phrases are unique
-        phrases = set(phrases)
+        phrases = list(set(phrases))
+        # We need to transform sentences into lists of words to make words 
+        # "atomic" (i.e. to prevent the analysis to get to char-based level)
+        for i, phrase in enumerate(phrases):
+            phrases[i] = tuple(phrase.split())
         # Progress monitor variables
-        total = utils.get_combination_number(len(phrases), 2)
-        current = 0
+        total = self.__get_combination_number(len(phrases), 2)
+        counter = 0
         start = time.time()
-        # First group pairs that have the same proximity ratio and the same 
-        # matching pattern (blocks + actual strings)...
-        groups = {}
+        # Group isomorphic sentences by analysing isomorphism of pairs, and
+        # adding them to sets of sentences with the same isomorphic pattern
+        families = {}
+        analyser = ExtendedSequenceMatcher()
         for a, b in itertools.combinations(phrases, 2):
-            current += 1
-            # No same length = No same family
-            if len(a) != len(b):
-                # Nonsense key values to make it unique
-                groups[(0, (a, b), 'skip')] = set((a, b)) 
-                continue
+            counter += 1
             analyser.set_seqs(a, b)
-            # The rounding function with decimals makes approximation errors
-            # related to the floating point internal representation of nums
-            ratio = int(math.floor(analyser.ratio()*1000))
-            blocks = tuple(analyser.get_matching_blocks())[:-1]  #need hashable!
-            common_words = utils.blocks_to_words(a, blocks)
-            key = (ratio, blocks, common_words)
-            if key not in groups.keys():
-                groups[key] = set()
-            groups[key].add(a)
-            groups[key].add(b)
-            if current % 1000 == 0:
-                progress_fraction = float(current)/total
+            iso = analyser.are_isomorphic()
+            # Only process isomorphic sentences
+            if iso:
+                # What below ensures no approx errors in ratios
+                if iso not in families.keys():
+                    families[iso] = set()
+                families[iso].add(a)
+                families[iso].add(b)
+                # Update progress bar every 1000 steps
+            if counter % 1000 == 0:
+                progress_fraction = float(counter)/total
                 now = time.time()
                 time_left = (now-start)/progress_fraction*(1-progress_fraction)
                 print('Progress: %.2f    Time left: %d minutes and %d seconds' 
@@ -109,33 +171,30 @@ class Logic(object):
         # Then eliminate multiple memberships of phrases to different families
         # by giving priorities to families with higher ratio and within those 
         # with the same ratio, to those with higher number of members)
-        priority = [k for k in groups]
-        priority.sort(key=lambda x: len(groups[x]), reverse=True) #size
+        priority = [k for k in families]
+        priority.sort(key=lambda x: len(families[x]), reverse=True) #fam. size
         priority.sort(key=lambda x: x[0], reverse=True) #affinity
         assigned_phrases = set()
         for key in priority:
-            groups[key] = groups[key].difference(assigned_phrases)
-            assigned_phrases = assigned_phrases.union(groups[key])
-        # Beautify the output removing keys and empty sets.
-        groups = [[phrase for phrase in group] 
-                  for k, group in groups.items() if len(group) != 0]
-        return groups
+            families[key] = families[key].difference(assigned_phrases)
+            assigned_phrases = assigned_phrases.union(families[key])
+        # Beautify the output removing keys and empty or single member sets.
+        families = [tuple([' '.join(phrase) for phrase in family]) 
+                  for k, family in families.items() if len(family) > 1]
+        return families
     
-    def __get_family_supersequence(self, phrases):
+    def __get_isomorphic_supersequence(self, phrases):
         '''
-        Return the Shortest Common Supersequence between phrases. Atomic words.
-        Works only for families in which all phrases have the same length.
+        Return the Shortest Common Supersequence between isomorphic phrases.
+        Atomic words.
         '''
-        # The key of this passage and to perform substitutions in an ordered
-        # way. Because of the nature of the program, it is highly possible that
-        # substitutions in phrases regard numbers. Creating supersequences
-        # where inserted numbers follow the same pattern maximise the 
-        # similitude between supersequences of different families.
-        #
-        # Because of the family creation algorithm, we know that any
-        # transformation between two phrases of the same family follow
-        # exactly the same pattern. Furthermore we know that the matching
-        # blocks on each phrase are in the SAME place.
+        # The key of this passage is to insert variable words in the common
+        # root in an ordered way. Because of the nature of the program, it is 
+        # highly possible that isomorphic phrases regard the substitutions of
+        # numbers. Creating supersequences where inserted numbers follow the 
+        # same pattern maximise the similitude between supersequences of
+        # different families.
+        phrases = [tuple(phrase.split()) for phrase in phrases]
         analyser = difflib.SequenceMatcher(None, phrases[0], phrases[1])
         mblocks = analyser.get_matching_blocks()[:-1]
         equal_positions = []
@@ -148,46 +207,51 @@ class Logic(object):
             if cursor in equal_positions:
                 supersequence.append(phrases[0][cursor])
             else:
-                for alternative in utils.get_alternatives(phrases, cursor):
+                for alternative in self.__get_alternatives(phrases, cursor):
                     supersequence.append(alternative)
             cursor += 1
-        print('SUPER', supersequence)
         return ' '.join(supersequence)
 
-    def __get_general_supersequence(self, phrases):
+    def __merge_closest_match(self, phrases):
         '''
-        Return a supersequence for a sentences that do not necessarily
-        resemble too much.
+        Modify in place phrases, merging the two most similar phrases in it.
         '''
+        # Make sure phrases are unique
+        phrases = list(set(phrases))
         phrases = [phrase.split() for phrase in phrases]
         analyser = difflib.SequenceMatcher()
-        print("ENTER", phrases)
-        while len(phrases) > 1:
-            # Find the closest pair
-            closest = None
-            for a, b in itertools.combinations(phrases, 2):
-                analyser.set_seqs(a, b)
-                ratio = analyser.ratio()
-                if closest == None or ratio > closest[0]:
-                    closest = (ratio, a, b)
-            # Remove it from the pool
-            phrases.remove(closest[1])
-            phrases.remove(closest[2])
-            # merge the two: lengthy but safer, this works by adapting one
-            # code at a time, and then re-performing the analysis until no
-            # other codes but "equal" or "remove".
-            while True:
+        # Find the closest pair
+        closest = None
+        for a, b in itertools.combinations(phrases, 2):
+            analyser.set_seqs(a, b)
+            ratio = analyser.ratio()
+            if closest == None or ratio > closest[0]:
+                closest = (ratio, a, b)
+        # Merge the two: lengthy but safer, this works by adapting one
+        # code at a time, and then re-performing the analysis until no
+        # other codes but "equal" or "remove".
+        # No isomorphic ==> A to B might be different than B to A
+        for i, j in ((1, 2), (2, 1)):
+            while True: 
                 insertion = False
-                analyser.set_seqs(closest[1], closest[2])
+                # Recreating the object is necessary because of a documented
+                # Python bug in libdiff that caches incorrectly opcodes.
+                # (see http://bugs.python.org/issue9985)
+                analyser = ExtendedSequenceMatcher(None,closest[i],closest[j])
                 for code, aa, az, ba, bz in analyser.get_opcodes():
                     if code in ('insert', 'replace'):
-                        closest[1].insert(az, closest[2][ba:bz])
+                        fragment = closest[j][ba:bz]
+                        for frag in reversed(fragment):
+                            closest[i].insert(az, frag)
                         insertion = True
-                        break  #not replacing but inserting screws up indexes!
+                        break
                 if insertion == False:
-                    phrases.append(closest[1])
-        print('EXIT', phrases)
-        return phrases[0]
+                    break
+        assert closest[1] == closest[2]
+        # "Closest" lists have been modified in place (within phrases list)
+        # so we keep one and eliminate the other. 
+        phrases.remove(closest[2])
+        return [' '.join(phrase) for phrase in phrases]
 
     def switch_clock(self, widget, clock_name):
         '''
@@ -221,7 +285,7 @@ class Logic(object):
         stats.append(("WORDS", ''))
         n_unique_words = len(word_set)
         stats.append(("Number of unique words", n_unique_words))
-        words_per_sentence = utils.get_min_avg_max(phrase_set, 'words')
+        words_per_sentence = self.__get_min_avg_max(phrase_set, 'words')
         stats.append(("Words per sentence (min, avg, max)", 
                       words_per_sentence))
         
@@ -229,9 +293,9 @@ class Logic(object):
         #len(unicode) would return bytesize of string, non number of chars
         n_chars = sum([len(w.decode("utf-8")) for w in word_set])
         stats.append(("Chars in unique words", n_chars))
-        chars_per_word = utils.get_min_avg_max(word_set, 'chars')
+        chars_per_word = self.__get_min_avg_max(word_set, 'chars')
         stats.append(("Chars per word (min, avg, max)", chars_per_word))
-        chars_per_sentence = utils.get_min_avg_max(phrase_set, 'chars')
+        chars_per_sentence = self.__get_min_avg_max(phrase_set, 'chars')
         stats.append(("Chars per sentence (min, avg, max)", 
                       chars_per_sentence))
 
@@ -282,32 +346,32 @@ class Logic(object):
         currently active clock module will be used (so the supersequence 
         will be able to display the entire day on the clock). 
         '''
-        # It's a long job! If already down, don't re-do it unless specifically
+        # It's a long job! If already done, don't re-do it unless specifically
         # told so!
         if self.shortest_supersequence and force_rerun == False:
             return self.shortest_supersequence
         # No phrases means... all phrases!!!
         if phrases == None:
             phrases = self.clock.get_phrases_dump()
-        # Group all sentences in "families" of similar sentences and
+        # ISOMORPHIC LOOP
+        # Group all sentences in "families" of isomorphic sentences and
         # find the shortest supersequence for each family. Repeat until
-        # families are no longer possible
+        # isomorphic families are no longer possible.
         while True:
-            families = self.__get_families(phrases)
-            print('FAMILIES:', families)
-            phrases = []
-            for family in families:
-                no_more_families = True
-                if len(family) > 1 and utils.check_all_same_lenght(family):
-                    phrases.append(self.__get_family_supersequence(family))
-                    no_more_families = False
-                else:
-                    phrases.append(' '.join(family[0]))
-            if no_more_families:
+            families = self.__get_isomorphic_families(phrases)
+            if len(families) == 0:
                 break
-        # Do the last merging between sequences that aren't anymore relatives
-        print('END OF FAMILIES', phrases)
-        return self.__get_general_supersequence(phrases)
+            orphans = self.__get_orphans(phrases, families)
+            supseqs = []
+            for family in families:
+                supseqs.append(self.__get_isomorphic_supersequence(family))
+            phrases = supseqs + orphans
+        # GENERIC LOOP
+        # Keep on merging the two most similar sentences in the pool until 
+        # the pool size is down to 1 unit.
+        while len(phrases) > 1:
+            phrases = self.__merge_closest_match(phrases)
+        return phrases[0]
 
     def test_sequence_against_phrases(self, sequence, phrases):
         '''

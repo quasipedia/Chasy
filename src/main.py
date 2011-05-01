@@ -92,7 +92,7 @@ if __name__ == '__main__':
     c = clocks.fiveminutesenglish.Clock()
     l = logic.Logic(None, None, True)  #debug configuration
     l.clock = c
-    l.get_sequence()
+    print(l.get_sequence())
     exit()
     Gui()
     gtk.main()
