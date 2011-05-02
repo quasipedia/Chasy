@@ -7,7 +7,7 @@ Created on 14 Apr 2011
 
 class Clock(object):
 
-    def __word_select(self, key, choices):
+    def _word_select(self, key, choices):
         '''
         Help method to select a given word in a dictionary in which keys are
         tuples. Example usage:

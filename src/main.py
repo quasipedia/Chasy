@@ -43,6 +43,15 @@ class Gui(object):
         
         self.window.show_all()
         
+    ###### HELPER FUNCTIONS #####
+
+    def __write_in_dump(self, what, how='ubuntu'):
+        '''
+        Update the text in the dump window, using the font "how".
+        '''
+        self.dump_textview.modify_font(pango.FontDescription(how))
+        self.dump_buffer.set_text(what)
+    
     ###### INPUT FOR TESTING TIMES #####
         
     def on_hours_value_changed(self, widget):
@@ -56,21 +65,18 @@ class Gui(object):
     ##### MENU COMMANDS ######    
     
     def on_dump_full_activate(self, widget):
-        self.dump_textview.modify_font(pango.FontDescription('Ubuntu'))
-        self.dump_buffer.set_text(
-                        '\n'.join(self.logic.clock.get_phrases_dump(True)))
+        text = '\n'.join(self.logic.clock.get_phrases_dump(True))
+        self.__write_in_dump(text)
         self.dump_window.show()
 
     def on_dump_textonly_activate(self, widget):
-        self.dump_textview.modify_font(pango.FontDescription('Ubuntu'))
-        self.dump_buffer.set_text(
-                            '\n'.join(self.logic.clock.get_phrases_dump()))
+        text = '\n'.join(self.logic.clock.get_phrases_dump())
+        self.__write_in_dump(text)
         self.dump_window.show()
 
     def on_analysis_word_stats_activate(self, widget):
         stats = self.logic.get_phrases_analysis()
-        self.dump_buffer.set_text(stats)
-        self.dump_textview.modify_font(pango.FontDescription('Courier'))
+        self.__write_in_dump(stats, 'courier')
         self.dump_window.show()
     
     def on_clockface_get_heuristics_activate(self, widget):
@@ -84,7 +90,6 @@ class Gui(object):
         self.heuristic_dialogue.hide()
         lines = '\n'.join(self.logic.shortest_supersequence.split())
         self.dump_buffer.set_text(lines)
-        self.dump_textview.modify_font(pango.FontDescription('Ubuntu'))
         self.dump_window.show()
         
     def on_stop_heuristic_button_clicked(self, widget):
@@ -117,6 +122,9 @@ class Gui(object):
         self.output_text.set_text(phrase)
 
 if __name__ == '__main__':
+#    l = logic.Logic(None, None, True)
+#    print(l.redundancy_filter('I am am a man dog', ['I am a man', 'I am a dog']))
+#    exit()
 #    import clocks.verboserussian
 #    c = clocks.verboserussian.Clock()
 #    l = logic.Logic(None, None, True)  #debug configuration

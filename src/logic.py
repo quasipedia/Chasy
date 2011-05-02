@@ -85,7 +85,7 @@ class Logic(object):
         self.clock = self.available_modules[initial_module].Clock()
         group.set_active(True)
     
-    def __get_min_avg_max(self, string_series, what, return_as_text=True):
+    def _get_min_avg_max(self, string_series, what, return_as_text=True):
         '''
         Return a tuple with the lengths of the shortest, longest, and average
         string in the series. Length can be measured in words or characters. If
@@ -101,14 +101,14 @@ class Logic(object):
             triplet = "(%d, %.1f, %d)" % triplet
         return triplet
     
-    def __get_alternatives(self, phrases, position):
+    def _get_alternatives(self, phrases, position):
         '''
         Return an ordered list of all the different unique words (sorted) that
         are present in "phrases" at position "position".
         '''
         return sorted(set([phrase[position] for phrase in phrases]))
     
-    def __get_combination_number(self, pool_size, sample_size):
+    def _get_combination_number(self, pool_size, sample_size):
         '''
         Return the number of sample_size big combinations without repetition that
         can be formed from a pool of pool_size).
@@ -116,7 +116,7 @@ class Logic(object):
         f = lambda x: math.factorial(x)
         return f(pool_size)/(f(sample_size)*f(pool_size - sample_size))
     
-    def __get_orphans(self, phrases, families):
+    def _get_orphans(self, phrases, families):
         '''
         Return the list of phrases which are not present in the family tree.
         (phrases is list, and families is list of lists) 
@@ -130,7 +130,7 @@ class Logic(object):
                     pass
         return phrases
  
-    def __get_isomorphic_families(self, phrases, 
+    def _get_isomorphic_families(self, phrases, 
                                   progress_bar=None, time_left_label=None):
         '''
         Group together isomorphic sequences. That means that sentence A can 
@@ -149,7 +149,7 @@ class Logic(object):
         for i, phrase in enumerate(phrases):
             phrases[i] = tuple(phrase.split())
         # Progress monitor variables
-        total = self.__get_combination_number(len(phrases), 2)
+        total = self._get_combination_number(len(phrases), 2)
         counter = 0
         start = time.time()
         # Group isomorphic sentences by analysing isomorphism of pairs, and
@@ -197,7 +197,7 @@ class Logic(object):
                   for k, family in families.items() if len(family) > 1]
         return families
     
-    def __get_isomorphic_supersequence(self, phrases):
+    def _get_isomorphic_supersequence(self, phrases):
         '''
         Return the Shortest Common Supersequence between isomorphic phrases.
         Atomic words.
@@ -221,12 +221,12 @@ class Logic(object):
             if cursor in equal_positions:
                 supersequence.append(phrases[0][cursor])
             else:
-                for alternative in self.__get_alternatives(phrases, cursor):
+                for alternative in self._get_alternatives(phrases, cursor):
                     supersequence.append(alternative)
             cursor += 1
         return ' '.join(supersequence)
 
-    def __merge_closest_match(self, phrases):
+    def _merge_closest_match(self, phrases):
         '''
         Modify in place phrases, merging the two most similar phrases in it.
         '''
@@ -266,7 +266,7 @@ class Logic(object):
         # so we keep one and eliminate the other. 
         phrases.remove(closest[2])
         return [' '.join(phrase) for phrase in phrases]
-
+    
     def switch_clock(self, widget, clock_name):
         '''
         Swap between different clock modules.
@@ -299,7 +299,7 @@ class Logic(object):
         stats.append(("WORDS", ''))
         n_unique_words = len(word_set)
         stats.append(("Number of unique words", n_unique_words))
-        words_per_sentence = self.__get_min_avg_max(phrase_set, 'words')
+        words_per_sentence = self._get_min_avg_max(phrase_set, 'words')
         stats.append(("Words per sentence (min, avg, max)", 
                       words_per_sentence))
         
@@ -307,9 +307,9 @@ class Logic(object):
         #len(unicode) would return bytesize of string, non number of chars
         n_chars = sum([len(w.decode("utf-8")) for w in word_set])
         stats.append(("Chars in unique words", n_chars))
-        chars_per_word = self.__get_min_avg_max(word_set, 'chars')
+        chars_per_word = self._get_min_avg_max(word_set, 'chars')
         stats.append(("Chars per word (min, avg, max)", chars_per_word))
-        chars_per_sentence = self.__get_min_avg_max(phrase_set, 'chars')
+        chars_per_sentence = self._get_min_avg_max(phrase_set, 'chars')
         stats.append(("Chars per sentence (min, avg, max)", 
                       chars_per_sentence))
 
@@ -372,41 +372,62 @@ class Logic(object):
         # No phrases means... all phrases!!!
         if phrases == None:
             phrases = self.clock.get_phrases_dump()
+        original_phrases = phrases
         # ISOMORPHIC LOOP
         # Group all sentences in "families" of isomorphic sentences and
         # find the shortest supersequence for each family. Repeat until
         # isomorphic families are no longer possible.
         while True:
-            families = self.__get_isomorphic_families(phrases, progress_bar, 
+            families = self._get_isomorphic_families(phrases, progress_bar, 
                                                       time_left_label)
             if families == -1:
                 return
             if len(families) == 0:
                 break
-            orphans = self.__get_orphans(phrases, families)
+            orphans = self._get_orphans(phrases, families)
             supseqs = []
             for family in families:
-                supseqs.append(self.__get_isomorphic_supersequence(family))
+                supseqs.append(self._get_isomorphic_supersequence(family))
             phrases = supseqs + orphans
         # GENERIC LOOP
         # Keep on merging the two most similar sentences in the pool until 
         # the pool size is down to 1 unit.
         while len(phrases) > 1:
-            phrases = self.__merge_closest_match(phrases)
-        self.shortest_supersequence = phrases[0] 
+            phrases = self._merge_closest_match(phrases)
+        # REDUNDANCY FILTER
+        self.shortest_supersequence = self.redundancy_filter(phrases[0], 
+                                                             original_phrases) 
         return self.shortest_supersequence
 
     def test_sequence_against_phrases(self, sequence, phrases):
         '''
         Test if a given sequence of words can be used to generate all the 
-        time phrases. Return True for passed.
+        time phrases. Return False for failure. In case of success:
         '''
         sequence = sequence.split()
         for phrase in phrases:
             cursor = 0
             for word in phrase.split():
                 try:
-                    cursor += sequence[cursor:].index(word)
+                    cursor += sequence[cursor:].index(word) + 1
                 except ValueError:
                     return False
         return True
+
+    def redundancy_filter(self, sequence, phrases):
+        '''
+        Remove unused items from the sequence. Return the filtered sequence.
+        '''
+        sequence = sequence.split()
+        used_words_indexes = set([])
+        for phrase in phrases:
+            cursor = 0
+            for word in phrase.split():
+                cursor += sequence[cursor:].index(word)
+                used_words_indexes.add(cursor)
+                cursor += 1  #exclude last matched word from following search
+        # Scan the entire sequence backwards = range(len, -1, -1)
+        for index in [i for i in range(len(sequence)-1, -1, -1) 
+                      if i not in used_words_indexes]:
+            sequence.pop(index)
+        return ' '.join(sequence)
