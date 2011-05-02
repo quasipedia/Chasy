@@ -7,6 +7,7 @@ Created on 14 Apr 2011
 '''
 
 import gtk
+import pango
 import logic
 
 class Gui(object):
@@ -23,7 +24,13 @@ class Gui(object):
         self.builder.connect_signals(self)
         self.window = self.builder.get_object("window")
         self.dump_window = self.builder.get_object("dump_window")
+        self.dump_textview = self.builder.get_object("dump_textview")
         self.dump_buffer = self.builder.get_object("dump_buffer")
+        self.heuristic_dialogue = \
+                self.builder.get_object("heuristic_dialogue")
+        self.progress_bar = self.builder.get_object("heuristic_progress")
+        self.time_left_label = \
+                self.builder.get_object("heuristic_time_left_label")
         self.about_dialogue = self.builder.get_object("about_dialogue")
         self.modules_menu = self.builder.get_object("modules")
         self.output_text = self.builder.get_object("output_text")
@@ -49,18 +56,40 @@ class Gui(object):
     ##### MENU COMMANDS ######    
     
     def on_dump_full_activate(self, widget):
+        self.dump_textview.modify_font(pango.FontDescription('Ubuntu'))
         self.dump_buffer.set_text(
                         '\n'.join(self.logic.clock.get_phrases_dump(True)))
         self.dump_window.show()
 
     def on_dump_textonly_activate(self, widget):
+        self.dump_textview.modify_font(pango.FontDescription('Ubuntu'))
         self.dump_buffer.set_text(
                             '\n'.join(self.logic.clock.get_phrases_dump()))
         self.dump_window.show()
 
     def on_analysis_word_stats_activate(self, widget):
-        self.logic.get_phrases_analysis()
+        stats = self.logic.get_phrases_analysis()
+        self.dump_buffer.set_text(stats)
+        self.dump_textview.modify_font(pango.FontDescription('Courier'))
+        self.dump_window.show()
     
+    def on_clockface_get_heuristics_activate(self, widget):
+        self.progress_bar.set_fraction(0)
+        self.heuristic_dialogue.show()
+        # The following forces the popup to show.
+        while gtk.events_pending():
+            gtk.main_iteration(False)
+        self.logic.get_sequence(progress_bar=self.progress_bar, 
+                                time_left_label=self.time_left_label)
+        self.heuristic_dialogue.hide()
+        lines = '\n'.join(self.logic.shortest_supersequence.split())
+        self.dump_buffer.set_text(lines)
+        self.dump_textview.modify_font(pango.FontDescription('Ubuntu'))
+        self.dump_window.show()
+        
+    def on_stop_heuristic_button_clicked(self, widget):
+        self.logic.halt_heuristic = True
+        
     ##### WINDOWS MANAGEMENT #####
         
     def on_close_dump_button_clicked(self, widget):
@@ -88,13 +117,13 @@ class Gui(object):
         self.output_text.set_text(phrase)
 
 if __name__ == '__main__':
-    import clocks.verboserussian
-    c = clocks.verboserussian.Clock()
-    l = logic.Logic(None, None, True)  #debug configuration
-    l.clock = c
-    seq = l.get_sequence()
-    print(len(seq.split()), seq)
-    print(l.test_sequence_against_phrases(seq, l.clock.get_phrases_dump()))
-    exit()
+#    import clocks.verboserussian
+#    c = clocks.verboserussian.Clock()
+#    l = logic.Logic(None, None, True)  #debug configuration
+#    l.clock = c
+#    seq = l.get_sequence()
+#    print(len(seq.split()), seq)
+#    print(l.test_sequence_against_phrases(seq, l.clock.get_phrases_dump()))
+#    exit()
     Gui()
     gtk.main()

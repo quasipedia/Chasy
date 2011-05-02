@@ -5,6 +5,7 @@
   <object class="GtkWindow" id="window">
     <property name="width_request">600</property>
     <property name="title" translatable="yes">Chasy test and debug platform</property>
+    <property name="window_position">center</property>
     <signal name="destroy" handler="on_window_destroy"/>
     <child>
       <object class="GtkVBox" id="vbox1">
@@ -138,6 +139,21 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">_Clockface</property>
                 <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu6">
+                    <property name="visible">True</property>
+                    <property name="ubuntu_local">True</property>
+                    <child>
+                      <object class="GtkMenuItem" id="clockface_get_heuristics">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Uses heuristic to perform the "Multiple Sequence Alignment" and find a possible supersequence able to generate all the time sentences of the clock.</property>
+                        <property name="label" translatable="yes">_Heuristic MSA</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_clockface_get_heuristics_activate"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>
@@ -259,6 +275,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
   </object>
   <object class="GtkAboutDialog" id="about_dialogue">
     <property name="border_width">5</property>
+    <property name="window_position">center</property>
     <property name="type_hint">normal</property>
     <property name="program_name">Chasy</property>
     <property name="copyright" translatable="yes">© 2011 - Mac Ryan</property>
@@ -306,6 +323,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
   <object class="GtkWindow" id="dump_window">
     <property name="width_request">400</property>
     <property name="height_request">200</property>
+    <property name="window_position">center</property>
     <signal name="delete_event" handler="on_dump_window_delete_event"/>
     <child>
       <object class="GtkVBox" id="vbox2">
@@ -317,7 +335,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
             <property name="hscrollbar_policy">automatic</property>
             <property name="vscrollbar_policy">automatic</property>
             <child>
-              <object class="GtkTextView" id="textview1">
+              <object class="GtkTextView" id="dump_textview">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="editable">False</property>
@@ -349,4 +367,116 @@ Phrases are NOT preceded by the HH:MM string.</property>
     </child>
   </object>
   <object class="GtkTextBuffer" id="dump_buffer"/>
+  <object class="GtkDialog" id="heuristic_dialogue">
+    <property name="border_width">5</property>
+    <property name="resizable">False</property>
+    <property name="window_position">center</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="urgency_hint">True</property>
+    <property name="deletable">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox2">
+        <property name="visible">True</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox3">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="visible">True</property>
+                <property name="xalign">0.10000000149011612</property>
+                <property name="label" translatable="yes">Chasy is using &lt;i&gt;heuristic&lt;/i&gt; to find a sequence of words from which it will be possible to compose all the sentences of the clock. It will take about a minute.
+
+Be advised that although the sequence will work, &lt;b&gt;there is no guarantee it is the shortest possible one&lt;/b&gt;. Knowing the grammar of the language, is often possbile to manually improve the automatic solution.</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+              </object>
+              <packing>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkProgressBar" id="heuristic_progress">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">13</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHBox" id="hbox2">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkLabel" id="label2">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">Estimated waiting time:</property>
+                    <attributes>
+                      <attribute name="weight" value="ultraheavy"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="padding">7</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="heuristic_time_left_label">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">0 seconds</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="padding">2</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area2">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="stop_heuristic_button">
+                <property name="label">gtk-stop</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_stop_heuristic_button_clicked"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">stop_heuristic_button</action-widget>
+    </action-widgets>
+  </object>
 </interface>

@@ -130,12 +130,18 @@ class Logic(object):
                     pass
         return phrases
  
-    def __get_isomorphic_families(self, phrases):
+    def __get_isomorphic_families(self, phrases, 
+                                  progress_bar=None, time_left_label=None):
         '''
         Group together isomorphic sequences. That means that sentence A can 
         be transformed in sentence B by applying the same opcodes needed to 
         transform B into A. Return a list of lists.
+        - progress_bar is the gtk progress bar for displaying progress
+        - time_left_label is the gtk label for displaying time left
         '''
+        # The following is a property taht can be changed by the stop button
+        # in the modal popup and that will halt the procedure.
+        self.halt_heuristic = False
         # Make sure phrases are unique
         phrases = list(set(phrases))
         # We need to transform sentences into lists of words to make words 
@@ -166,8 +172,16 @@ class Logic(object):
                 progress_fraction = float(counter)/total
                 now = time.time()
                 time_left = (now-start)/progress_fraction*(1-progress_fraction)
-                print('Progress: %.2f    Time left: %d minutes and %d seconds' 
-                      % (progress_fraction*100, time_left/60, time_left%60))
+                if progress_bar:
+                    progress_bar.set_fraction(progress_fraction)
+                if time_left_label:
+                    time_left_label.set_text('%d seconds' % time_left)
+                if progress_bar or time_left_label:
+                    # The following forces the popup to show.
+                    while gtk.events_pending():
+                        gtk.main_iteration(False)
+            if self.halt_heuristic == True:
+                return -1
         # Then eliminate multiple memberships of phrases to different families
         # by giving priorities to families with higher ratio and within those 
         # with the same ratio, to those with higher number of members)
@@ -305,14 +319,15 @@ class Logic(object):
                       approx_board_size))
 
         # Generate text data
+        text = ''
         col_width = max(map(len, [t for t, v in stats])) + 7
         for t, v in stats:
             if v != '':
                 t += ' '
-                print(t.ljust(col_width, '.') + ' %s') % str(v)
+                text += (t.ljust(col_width, '.') + ' %s') % str(v) + '\n'
             else:
                 t = ' ' + t
-                print(t.rjust(col_width, '>'))
+                text += t.rjust(col_width, '>') + '\n'
         
         # Append disclaimer
         disclaimer = '''\
@@ -320,7 +335,8 @@ class Logic(object):
         be considered as an "hard bottom limit" below which is physically
         impossible to go. However it is possible that the actual matrix will 
         need to be larger to accommodate for logical and spatial needs.'''
-        print('\n' + textwrap.fill(textwrap.dedent(disclaimer), col_width))
+        text += '\n' + textwrap.fill(textwrap.dedent(disclaimer), col_width)
+        return text
 
     def get_minimum_panel_size(self, chars):
         '''
@@ -337,14 +353,17 @@ class Logic(object):
         extra_cells = x*y-chars
         return x, y, extra_cells
     
-    def get_sequence(self, phrases=None, force_rerun=False):
+    def get_sequence(self, phrases=None, force_rerun=False, 
+                     progress_bar=None, time_left_label=None):
         '''
         Return a common supersequence to all the phrases.
         The generation of the supersequence is done heuristically and there 
         is no guarantee the supersequence will be the shortest possible.
         If no phrases are passed as parameters, all the phrases for the
         currently active clock module will be used (so the supersequence 
-        will be able to display the entire day on the clock). 
+        will be able to display the entire day on the clock).
+        - progress_bar is the gtk widget for displaying progress
+        - time_left_label is the gtk label for displaying time left
         '''
         # It's a long job! If already done, don't re-do it unless specifically
         # told so!
@@ -358,7 +377,10 @@ class Logic(object):
         # find the shortest supersequence for each family. Repeat until
         # isomorphic families are no longer possible.
         while True:
-            families = self.__get_isomorphic_families(phrases)
+            families = self.__get_isomorphic_families(phrases, progress_bar, 
+                                                      time_left_label)
+            if families == -1:
+                return
             if len(families) == 0:
                 break
             orphans = self.__get_orphans(phrases, families)
@@ -371,7 +393,8 @@ class Logic(object):
         # the pool size is down to 1 unit.
         while len(phrases) > 1:
             phrases = self.__merge_closest_match(phrases)
-        return phrases[0]
+        self.shortest_supersequence = phrases[0] 
+        return self.shortest_supersequence
 
     def test_sequence_against_phrases(self, sequence, phrases):
         '''
