@@ -10,7 +10,57 @@ import logic
 import baseclock
 import clocks.verboserussian as verboserussian
 
-class Logic(unittest.TestCase):
+class LogicPrivateUtils(unittest.TestCase):
+    
+    '''
+    Test all the logic behind the program intelligence.
+    '''
+    
+    logic = logic.Logic(None, None, True)  #debug configuration
+    phrases = ["it is five past one",
+               "it is one to two",
+               "it is two to three",
+               "it is three to four",
+               "it is four to five",
+               "it is five to six",
+               "it is four past seven",
+               "it is three past eight",
+               "it is two past nine",
+               "it is one past ten",
+               "it is eleven o'clock",
+               "it is twelve o'clock",
+               "it is one o'clock",
+               "it is two o'clock",
+               "it is three o'clock"]
+    expected_families = [("it is one to two", "it is three to four", 
+                          "it is four to five", "it is five to six", 
+                          "it is two to three"),
+                         ("it is two o'clock", "it is one o'clock", 
+                          "it is eleven o'clock", "it is three o'clock", 
+                          "it is twelve o'clock"),
+                         ("it is one past ten", "it is five past one", 
+                          "it is two past nine", "it is four past seven", 
+                          "it is three past eight")]
+    
+    def testIsomorphicFamilies(self):
+        '''Grouping similar phrases together.'''
+        families = self.logic._get_isomorphic_families(self.phrases)
+        self.assertEqual(len(self.expected_families), len(families))
+        families = set([tuple(sorted(fam)) for fam in families])
+        expected_families = set([tuple(sorted(fam)) for fam in 
+                                                    self.expected_families])
+        self.assertEqual(families, expected_families)
+
+    def testOrphanFinder(self):
+        '''Finding orphans in families.'''
+        phrases = self.phrases[:]
+        expected_orphans = ['it is nine to nine', 'it is five to seven']
+        phrases.insert(3, expected_orphans[1])
+        phrases.insert(7, expected_orphans[0])
+        orphans = self.logic._get_orphans(phrases, self.expected_families)
+        self.assertEqual(sorted(orphans), sorted(expected_orphans))
+
+class LogicPublicAPI(unittest.TestCase):
     
     '''
     Test all the logic behind the program intelligence.
@@ -18,57 +68,38 @@ class Logic(unittest.TestCase):
     
     logic = logic.Logic(None, None, True)  #debug configuration
     
-    def testIsomorphicFamilies(self):
-        '''Grouping similar phrases together.'''
-        phrases = ["it is five past one",
-                   "it is one to two",
-                   "it is two to three",
-                   "it is three to four",
-                   "it is four to five",
-                   "it is five to six",
-                   "it is four past seven",
-                   "it is three past eight",
-                   "it is two past nine",
-                   "it is one past ten",
-                   "it is eleven o'clock",
-                   "it is twelve o'clock",
-                   "it is one o'clock",
-                   "it is two o'clock",
-                   "it is three o'clock"]
-        expected_families = [["it is one to two", "it is three to four", 
-                              "it is four to five", "it is five to six", 
-                              "it is two to three"],
-                             ["it is two o'clock", "it is one o'clock", 
-                              "it is eleven o'clock", "it is three o'clock", 
-                              "it is twelve o'clock"],
-                             ["it is one past ten", "it is five past one", 
-                              "it is two past nine", "it is four past seven", 
-                              "it is three past eight"]]
-        families = self.logic._get_isomorphic_families(phrases)
-        self.assertEqual(families, expected_families)
-
     def testHeuristicBasic(self):
-        '''Sequence generation against known solution'''
+        '''Sequence generation basic test (against known solution)'''
         phrases = ['aaa bbb ccc',
                    'ddd eee fff',
                    'ccc ddd']
-        order = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff']
-        self.assertEqual(self.logic.get_sequence(phrases), order)
+        order = 'aaa bbb ccc ddd eee fff'
+        self.assertEqual(self.logic.get_sequence(phrases, force_rerun=True), 
+                                                 order)
 
-    def testOrderTricky(self):
-        '''Stress test for the sequence generation algorithm:
+    def testHeuristicTricky(self):
+        '''Sequence generation stress test (valid solution):
         - compare identical duplicate words (ccc)
         - create a duplicate word which is not explicitly used twice in the
           same sentence (eee)
         - sort alternate sequences (fff ggg fff ggg)
         '''
-        phrases = ['eee aaa bbb ccc', 'ccc ddd eee', 'ccc ccc',
-                       'eee fff ggg', 'ggg fff', 'ggg fff ggg']
-        seq = self.logic.get_sequence(phrases)
+        phrases = ['eee aaa bbb ccc', 'ccc ddd eee', 'ccc ccc ccc',
+                   'eee fff ggg', 'ggg fff', 'ggg fff ggg']
+        # Anecdote: the test was initially designed to run against the known
+        # obviou soulution, which would be: 
+        #    'eee aaa bbb ccc ccc ccc ddd eee fff ggg fff ggg'
+        # well, during debugging it turned out that the heuristic can find
+        # a better, less obvious valid one, which is:
+        #    'eee aaa ggg bbb fff ccc ccc ddd ccc eee ggg'
+        # It has an element less! .....WOW! :)
+        seq = self.logic.get_sequence(phrases, force_rerun=True)
         self.assertTrue(self.logic.test_sequence_against_phrases(seq, phrases))
         
-    def testOrderLong(self):
-        '''Sequence generation with long list of long sentences.'''
+    def testHeuristicNonIsomorphic(self):
+        '''Sequence generation with few isomoprhic sentences (valid solution)
+        Tests for a valid superset of unknown length.
+        '''
         phrases = ['the red carpet is unrolled on the floor',
                    'a cat is walking on the carpet',
                    'a cat is walking on a red floor',
@@ -79,10 +110,48 @@ class Logic(unittest.TestCase):
                    'a cat and a herring are on the floor',
                    'no cat is on the carpet',
                    'no logic can hold against ideology']
-        seq = self.logic.get_sequence(phrases)
+        seq = self.logic.get_sequence(phrases, force_rerun=True)
         self.assertTrue(self.logic.test_sequence_against_phrases(seq, phrases))
+
+    def testSequenceTester(self):
+        '''Sequence tester.'''
+        phrases = ["I have many flowers at home",
+                   "I do not have that many animals at the farm",
+                   "I have very few cabbages in the fridge",
+                   "If I have or have not it is none of your business"]
+        ok_seq = """If I do not have or have very not that many few flowers 
+                    animals cabbages at in the home farm fridge it is none 
+                    of your business"""
+        self.assertTrue(self.logic.test_sequence_against_phrases(ok_seq, 
+                                                                 phrases))
+        ko_seq = ok_seq[0:ok_seq.index('few')] + \
+                 ok_seq[ok_seq.index('few')+4:]
+        self.assertFalse(self.logic.test_sequence_against_phrases(ko_seq,
+                                                                 phrases))
         
-        
+    def testRedundancyFilterLoop(self):
+        '''Redundancy filter loop.'''
+        phrases = ["I have many flowers at home",
+                   "I do not have that many animals at the farm",
+                   "I have very few cabbages in the fridge",
+                   "If I have or have not it is none of your business"]
+        ok_seq = """If I do not have or have very not that many few flowers 
+                    animals cabbages at in the home farm fridge it is none 
+                    of your business"""
+        noisy_seq = """If I do not have or have have very not that many few 
+                       flowers inserted snippet here animals cabbages at in 
+                       the home land farm fridge fridge it is none of your 
+                       business have"""
+        ok_seq = ' '.join(ok_seq.split())
+        sequence = noisy_seq
+        while True:
+            new_sequence = self.logic.redundancy_filter(sequence, phrases)
+            if len(new_sequence) < len(sequence):
+                sequence = new_sequence
+            else:
+                break
+        self.assertEqual(new_sequence, ok_seq)
+
 class BaseClock(unittest.TestCase):
     
     '''
@@ -113,7 +182,7 @@ class Russian(unittest.TestCase):
     clock = verboserussian.Clock()
     
     def testRoundHour(self):
-        '''Generation of "o'clock" sentences.'''
+        '''Generation of russian "o'clock" sentences.'''
         known_values = {(0, 0):'Сейчас полночь',
                         (1, 0):'Сейчас ровно один час ночи',
                         (2, 0):'Сейчас ровно два часа ночи',

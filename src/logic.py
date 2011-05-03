@@ -21,17 +21,23 @@ class ExtendedSequenceMatcher(difflib.SequenceMatcher):
     This class adds a couple of test methods to the standard difflib one.
     '''
     
-    def are_isomorphic(self):
+    def are_isomorphic(self, ratio_threshold=0):
         '''
         Check if the transformation between A and B is the same of the
         transformation between B and A and if such transformation only 
         includes replacements.
+        - ratio_threshold indicates above what ratio the two sentences can
+          be considered isomorphic. If A and B are two totally different 
+          sequences of the same lenght they would be isomorphic with a ratio 
+          of 0.
         - Return False in case of A and B not being isomorphic
         - Return a tuple (ratio, matching_seqs, opcodes) if A and B are 
           isomorphic. All couple of isomorphic sentences that generate the same 
           tuple are isomorphic between themselves.
         '''
         if len(self.a) != len(self.b):
+            return False
+        if self.ratio() < ratio_threshold:
             return False
         matching_seqs = []
         codes = self.get_opcodes()
@@ -159,7 +165,7 @@ class Logic(object):
         for a, b in itertools.combinations(phrases, 2):
             counter += 1
             analyser.set_seqs(a, b)
-            iso = analyser.are_isomorphic()
+            iso = analyser.are_isomorphic(ratio_threshold=0.6)
             # Only process isomorphic sentences
             if iso:
                 # What below ensures no approx errors in ratios
@@ -394,15 +400,21 @@ class Logic(object):
         # the pool size is down to 1 unit.
         while len(phrases) > 1:
             phrases = self._merge_closest_match(phrases)
-        # REDUNDANCY FILTER
-        self.shortest_supersequence = self.redundancy_filter(phrases[0], 
-                                                             original_phrases) 
+        # REDUNDANCY FILTER LOOP
+        sequence = phrases[0]
+        while True:
+            new_sequence = self.redundancy_filter(sequence, original_phrases)
+            if len(new_sequence) < len(sequence):
+                sequence = new_sequence
+            else:
+                break
+        self.shortest_supersequence = sequence
         return self.shortest_supersequence
 
     def test_sequence_against_phrases(self, sequence, phrases):
         '''
         Test if a given sequence of words can be used to generate all the 
-        time phrases. Return False for failure. In case of success:
+        time phrases. Return True in case of success:
         '''
         sequence = sequence.split()
         for phrase in phrases:
