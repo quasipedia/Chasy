@@ -9,6 +9,7 @@ Created on 14 Apr 2011
 import gtk
 import pango
 import logic
+import clockface
 
 class Gui(object):
 
@@ -28,12 +29,16 @@ class Gui(object):
         self.dump_buffer = self.builder.get_object("dump_buffer")
         self.heuristic_dialogue = \
                 self.builder.get_object("heuristic_dialogue")
-        self.progress_bar = self.builder.get_object("heuristic_progress")
-        self.time_left_label = \
+        self.msa_progress_bar = self.builder.get_object("heuristic_progress")
+        self.msa_time_left_label = \
                 self.builder.get_object("heuristic_time_left_label")
+        self.msa_phase_label = \
+                self.builder.get_object("heuristic_phase_label")
         self.about_dialogue = self.builder.get_object("about_dialogue")
         self.modules_menu = self.builder.get_object("modules")
         self.output_text = self.builder.get_object("output_text")
+        self.clockface_window = self.builder.get_object("clockface_window")
+        self.clockface_image = self.builder.get_object("clockface_image")
 
         self.hours = 0
         self.minutes = 0
@@ -51,6 +56,21 @@ class Gui(object):
         '''
         self.dump_textview.modify_font(pango.FontDescription(how))
         self.dump_buffer.set_text(what)
+        
+    def __update_msa_progress_values(self, phase=None, time=None, bar=None):
+        '''
+        Update the MSA (multiple sequence alignment progress info.
+        '''
+        if phase:
+            self.msa_phase_label.set_text(phase)
+        if time:
+            self.msa_time_left_label.set_text(time)
+        if bar:
+            self.msa_progress_bar.set_fraction(bar)
+        else:
+            self.msa_progress_bar.pulse()
+        while gtk.events_pending():
+            gtk.main_iteration(False)
     
     ###### INPUT FOR TESTING TIMES #####
         
@@ -80,18 +100,37 @@ class Gui(object):
         self.dump_window.show()
     
     def on_clockface_get_heuristics_activate(self, widget):
-        self.progress_bar.set_fraction(0)
+        self.msa_progress_bar.set_fraction(0)
         self.heuristic_dialogue.show()
-        # The following forces the popup to show.
-        while gtk.events_pending():
-            gtk.main_iteration(False)
-        self.logic.get_sequence(progress_bar=self.progress_bar, 
-                                time_left_label=self.time_left_label)
+        self.logic.get_sequence(callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
         lines = '\n'.join(self.logic.shortest_supersequence.split())
         self.dump_buffer.set_text(lines)
         self.dump_window.show()
-        
+    
+    def on_clockface_auto_distribution_activate(self, widget):
+        seq = self.logic.get_sequence()
+        len_seq = sum([len(x.decode('utf-8')) for x in seq.split()])
+        size = self.logic.get_minimum_panel_size(len_seq)
+        self.cface = clockface.ClockFace(size[0], size[1], 
+                                         self.clockface_image)
+        self.cface.arrange_sequence(seq)
+        self.cface.display()
+        self.clockface_window.show()
+    
+    def on_clockface_window_key_press_event(self, widget, data):
+        kv = data.keyval
+        if kv == 65361:  #left arrow
+            self.cface.move_selection(-1)
+        elif kv == 65363:  #right arrow
+            self.cface.move_selection(1)
+        elif unichr(kv) in ('a', 'A'):
+            self.cface.shift_selected(-1)
+        elif unichr(kv) in ('d', 'D'):
+            self.cface.shift_selected(1)
+        self.cface.display()
+        return True
+
     def on_stop_heuristic_button_clicked(self, widget):
         self.logic.halt_heuristic = True
         
@@ -110,12 +149,19 @@ class Gui(object):
     def on_about_dialogue_delete_event(self, widget):
         self.about_dialogue.hide()
         return True
+    
+    def on_clockface_window_delete_event(self, widget, data):
+        self.clockface_window.hide()
+        return True
 
     def on_about_dialogue_response(self, widget, data):
         self.about_dialogue.hide()
 
     def on_window_destroy(self, widget):
         gtk.main_quit()
+        
+    def on_cfb_save_file_clicked(self, widget):
+        self.cface.scene.write_svg_file('clockface.svg')
         
     def update_text(self):
         phrase = self.logic.clock.get_time_phrase(self.hours, self.minutes)

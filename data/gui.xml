@@ -152,6 +152,15 @@ Phrases are NOT preceded by the HH:MM string.</property>
                         <signal name="activate" handler="on_clockface_get_heuristics_activate"/>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkMenuItem" id="clockface_auto_distribution">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Try to distribute words on the clockface automatically.</property>
+                        <property name="label" translatable="yes">_Auto Distribution</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_clockface_auto_distribution_activate"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
@@ -388,7 +397,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <property name="xalign">0.10000000149011612</property>
                 <property name="label" translatable="yes">Chasy is using &lt;i&gt;heuristic&lt;/i&gt; to find a sequence of words from which it will be possible to compose all the sentences of the clock. It will take about a minute.
 
-Be advised that although the sequence will work, &lt;b&gt;there is no guarantee it is the shortest possible one&lt;/b&gt;. Knowing the grammar of the language, is often possbile to manually improve the automatic solution.</property>
+Be advised that although the sequence will work, &lt;b&gt;there is no guarantee it is the shortest possible one&lt;/b&gt;. Knowing the grammar of the language in use, is sometimes possbile to manually improve the automatic solution.</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
               </object>
@@ -405,6 +414,42 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
                 <property name="fill">False</property>
                 <property name="padding">13</property>
                 <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHBox" id="hbox3">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkLabel" id="label3">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Heuristic phase:</property>
+                    <attributes>
+                      <attribute name="weight" value="ultraheavy"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="padding">7</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="heuristic_phase_label">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">phase name</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="padding">2</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -428,7 +473,7 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
                 <child>
                   <object class="GtkLabel" id="heuristic_time_left_label">
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">0 seconds</property>
+                    <property name="label" translatable="yes"># seconds</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -439,7 +484,7 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
                 </child>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
@@ -478,5 +523,99 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
     <action-widgets>
       <action-widget response="0">stop_heuristic_button</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkWindow" id="clockface_window">
+    <property name="title" translatable="yes">Clockface design</property>
+    <signal name="key_press_event" handler="on_clockface_window_key_press_event"/>
+    <signal name="delete_event" handler="on_clockface_window_delete_event"/>
+    <child>
+      <object class="GtkHBox" id="hbox4">
+        <property name="visible">True</property>
+        <child>
+          <object class="GtkVBox" id="vbox4">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkToggleButton" id="cfb_show_grid">
+                <property name="label" translatable="yes">Show grid</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToggleButton" id="cfb_show_edges">
+                <property name="label" translatable="yes">Show edges</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="cfb_save_file">
+                <property name="label" translatable="yes">Save SVG file</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_cfb_save_file_clicked"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Use &lt;b&gt;arrows&lt;/b&gt; to move cursor.
+
+&lt;b&gt;A&lt;/b&gt; - Shift word to the left
+&lt;b&gt;D &lt;/b&gt;- Shift word to the right
+
+Shifts are allowed only if the resulting sequence will still be able to generate all the time sentences of the clock.</property>
+                <property name="use_markup">True</property>
+                <property name="wrap">True</property>
+                <property name="width_chars">30</property>
+              </object>
+              <packing>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="padding">3</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkVSeparator" id="vseparator1">
+            <property name="visible">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkImage" id="clockface_image">
+            <property name="visible">True</property>
+            <property name="stock">gtk-missing-image</property>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
   </object>
 </interface>

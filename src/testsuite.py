@@ -129,8 +129,8 @@ class LogicPublicAPI(unittest.TestCase):
         self.assertFalse(self.logic.test_sequence_against_phrases(ko_seq,
                                                                  phrases))
         
-    def testRedundancyFilterLoop(self):
-        '''Redundancy filter loop.'''
+    def testCoarseRedundancyLoop(self):
+        '''Coarse redundancy filter loop.'''
         phrases = ["I have many flowers at home",
                    "I do not have that many animals at the farm",
                    "I have very few cabbages in the fridge",
@@ -145,12 +145,29 @@ class LogicPublicAPI(unittest.TestCase):
         ok_seq = ' '.join(ok_seq.split())
         sequence = noisy_seq
         while True:
-            new_sequence = self.logic.redundancy_filter(sequence, phrases)
+            new_sequence = self.logic.coarse_redundancy_filter(sequence, 
+                                                               phrases)
             if len(new_sequence) < len(sequence):
                 sequence = new_sequence
             else:
                 break
         self.assertEqual(new_sequence, ok_seq)
+        
+    def testShiftingWords(self):
+        '''Shifting words in a list'''
+        phrases = ['I have one dog', 'I have two cats']
+        sequence = 'I have one two dog cats'
+        seq_list = sequence.split()
+        # "one" to right
+        self.assertTrue(self.logic.shift_word(2, 1, seq_list, phrases))
+        # "cats" to left
+        self.assertTrue(self.logic.shift_word(5, -1, seq_list, phrases))
+        # "I" to right
+        self.assertFalse(self.logic.shift_word(0, 1, seq_list, phrases))
+        # "have" to left
+        self.assertFalse(self.logic.shift_word(1, -1, seq_list, phrases))
+        # "have" to left with force
+        self.assertTrue(self.logic.shift_word(1, -1, seq_list, phrases, True))
 
 class BaseClock(unittest.TestCase):
     

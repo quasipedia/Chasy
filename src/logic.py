@@ -136,14 +136,12 @@ class Logic(object):
                     pass
         return phrases
  
-    def _get_isomorphic_families(self, phrases, 
-                                  progress_bar=None, time_left_label=None):
+    def _get_isomorphic_families(self, phrases, callback=None):
         '''
         Group together isomorphic sequences. That means that sentence A can 
         be transformed in sentence B by applying the same opcodes needed to 
         transform B into A. Return a list of lists.
-        - progress_bar is the gtk progress bar for displaying progress
-        - time_left_label is the gtk label for displaying time left
+        - callback is the function to invoke to update progress data in GUI
         '''
         # The following is a property taht can be changed by the stop button
         # in the modal popup and that will halt the procedure.
@@ -173,19 +171,12 @@ class Logic(object):
                     families[iso] = set()
                 families[iso].add(a)
                 families[iso].add(b)
-                # Update progress bar every 1000 steps
-            if counter % 1000 == 0:
+            # Update progress info every 1000 steps if present
+            if callback and counter % 1000 == 0:
                 progress_fraction = float(counter)/total
                 now = time.time()
                 time_left = (now-start)/progress_fraction*(1-progress_fraction)
-                if progress_bar:
-                    progress_bar.set_fraction(progress_fraction)
-                if time_left_label:
-                    time_left_label.set_text('%d seconds' % time_left)
-                if progress_bar or time_left_label:
-                    # The following forces the popup to show.
-                    while gtk.events_pending():
-                        gtk.main_iteration(False)
+                callback(bar=progress_fraction, time='%d seconds' % time_left)
             if self.halt_heuristic == True:
                 return -1
         # Then eliminate multiple memberships of phrases to different families
@@ -273,6 +264,26 @@ class Logic(object):
         phrases.remove(closest[2])
         return [' '.join(phrase) for phrase in phrases]
     
+    def _get_multiple_words(self, sequence):
+        '''
+        Return a set of words that occurs multiple times in the sequence.
+        '''
+        seen = set()
+        multis = set()
+        for word in sequence:
+            if word in seen:
+                multis.add(word)
+            else:
+                seen.add(word)
+        return multis
+    
+    def _get_all_item_indexes(self, item, list_):
+        '''
+        Return all the indexes at which item occurs in list_.
+        The items are inherently sorted.
+        '''
+        return [i for i, el in enumerate(list_) if el == item]
+    
     def switch_clock(self, widget, clock_name):
         '''
         Swap between different clock modules.
@@ -359,8 +370,7 @@ class Logic(object):
         extra_cells = x*y-chars
         return x, y, extra_cells
     
-    def get_sequence(self, phrases=None, force_rerun=False, 
-                     progress_bar=None, time_left_label=None):
+    def get_sequence(self, phrases=None, force_rerun=False, callback=None):
         '''
         Return a common supersequence to all the phrases.
         The generation of the supersequence is done heuristically and there 
@@ -368,8 +378,7 @@ class Logic(object):
         If no phrases are passed as parameters, all the phrases for the
         currently active clock module will be used (so the supersequence 
         will be able to display the entire day on the clock).
-        - progress_bar is the gtk widget for displaying progress
-        - time_left_label is the gtk label for displaying time left
+        - callback is the function to invoke to update progress data in GUI
         '''
         # It's a long job! If already done, don't re-do it unless specifically
         # told so!
@@ -379,13 +388,18 @@ class Logic(object):
         if phrases == None:
             phrases = self.clock.get_phrases_dump()
         original_phrases = phrases
-        # ISOMORPHIC LOOP
+        # If ran without GUI, create a sinkhole callback:
+        if callback == None:
+            callback = lambda **kwargs: None
+        # SHRINKING BY ISOMORPHISM
         # Group all sentences in "families" of isomorphic sentences and
         # find the shortest supersequence for each family. Repeat until
         # isomorphic families are no longer possible.
+        pass_counter = 0
         while True:
-            families = self._get_isomorphic_families(phrases, progress_bar, 
-                                                      time_left_label)
+            pass_counter += 1
+            callback(phase='Isomorphic grouping, pass %d' % pass_counter)
+            families = self._get_isomorphic_families(phrases, callback)
             if families == -1:
                 return
             if len(families) == 0:
@@ -395,19 +409,28 @@ class Logic(object):
             for family in families:
                 supseqs.append(self._get_isomorphic_supersequence(family))
             phrases = supseqs + orphans
-        # GENERIC LOOP
+        # SHRINKING BY SIMILARITY
         # Keep on merging the two most similar sentences in the pool until 
         # the pool size is down to 1 unit.
+        callback(phase='Shrink by similarity', time='Not much...')
         while len(phrases) > 1:
+            callback()  # pulse the bar
             phrases = self._merge_closest_match(phrases)
-        # REDUNDANCY FILTER LOOP
+        # COARSE REDUNDANCY OPTIMISATION
+        callback(phase='Coarse redundancy loop', time='Short!')
         sequence = phrases[0]
         while True:
-            new_sequence = self.redundancy_filter(sequence, original_phrases)
+            callback()
+            new_sequence = self.coarse_redundancy_filter(sequence, 
+                                                         original_phrases)
             if len(new_sequence) < len(sequence):
                 sequence = new_sequence
             else:
                 break
+        # FINE REDUNDANCY OPTIMISATION
+        callback(phase='Fine redundancy loop', time='Very short! Promised!!')
+        sequence = self.fine_redundancy_filter(sequence, original_phrases, 
+                                               callback)
         self.shortest_supersequence = sequence
         return self.shortest_supersequence
 
@@ -426,9 +449,12 @@ class Logic(object):
                     return False
         return True
 
-    def redundancy_filter(self, sequence, phrases):
+    def coarse_redundancy_filter(self, sequence, phrases):
         '''
         Remove unused items from the sequence. Return the filtered sequence.
+        This is a sub-perfect signal-to-noise filter, whose only purpose is to
+        quickly eliminate obvious redundant elements. The fine work of 
+        taking away ALL redundant elements is done by fine_redundancy_filter().
         '''
         sequence = sequence.split()
         used_words_indexes = set([])
@@ -443,3 +469,37 @@ class Logic(object):
                       if i not in used_words_indexes]:
             sequence.pop(index)
         return ' '.join(sequence)
+
+    def shift_word(self, index, direction, seq_list, phrases, force=False):
+        '''
+        Shift the word at position "index" in the sequence to either right (1) 
+        or left (-1) along the list, if the result would still allow all the 
+        phrases to be created with the new sequence.
+        Return the new sequence if shift has been performed, False otherwise.
+        In case "force" is set to True, the shift is performed anyhow.
+        '''
+        seq_list = seq_list[:]  #prevent to modify the original object
+        word = seq_list.pop(index)
+        seq_list.insert(index + direction, word)
+        if force == True:
+            return seq_list
+        to_test = [phrase for phrase in phrases if word in phrase]
+        if self.test_sequence_against_phrases(' '.join(seq_list), to_test):
+            return seq_list
+        else:
+            return False
+
+    def fine_redundancy_filter(self, sequence, phrases, callback=None):
+        '''
+        Remove unused items from the sequence. Return the filtered sequence.
+        This is an accurate algorithm that check that every duplicated word
+        cannot in fact be used only once.
+        '''
+        return sequence
+#        multis = self._get_multiple_words(sequence)
+#        if not multis:
+#            return sequence
+#        sequence = sequence.split()
+#        for word in multis:
+#            positions = self._get_all_item_indexes(word, sequence)
+#        return ' '.join(sequence)
