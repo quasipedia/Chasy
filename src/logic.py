@@ -1,8 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on 14 Apr 2011
-
-@author: mac
+Core logic for the Chasy program.
 '''
 
 import glob
@@ -13,7 +12,14 @@ import itertools
 import difflib
 import math
 import time
-import utils
+
+__author__ = "Mac Ryan"
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
+
 
 class ExtendedSequenceMatcher(difflib.SequenceMatcher):
 
@@ -496,10 +502,11 @@ class Logic(object):
         cannot in fact be used only once.
         '''
         return sequence
-#        multis = self._get_multiple_words(sequence)
-#        if not multis:
-#            return sequence
-#        sequence = sequence.split()
-#        for word in multis:
-#            positions = self._get_all_item_indexes(word, sequence)
-#        return ' '.join(sequence)
+
+
+def run_as_script():
+    '''Run this code if the file is executed as script.'''
+    print('Module executed as script!')
+
+if __name__ == '__main__':
+    run_as_script()

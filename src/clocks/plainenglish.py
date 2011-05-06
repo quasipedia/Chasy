@@ -1,11 +1,18 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on 29 Apr 2011
-
-@author: mac
+Clock plugin providing sentences in standard English.
 '''
 
 import baseclock
+
+__author__ = "Mac Ryan"
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
+
 
 class Clock(baseclock.Clock):
     
@@ -69,3 +76,11 @@ class Clock(baseclock.Clock):
         if minutes == 0:
             words.append("o'clock")
         return ' '.join(words)
+    
+
+def run_as_script():
+    '''Run this code if the file is executed as script.'''
+    print('Module executed as script!')
+
+if __name__ == '__main__':
+    run_as_script()

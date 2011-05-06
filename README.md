@@ -5,9 +5,9 @@ __Copyright (C) 2011 Mac Ryan__
 
 Description
 -----------
-Chasy (Russian for "clock") is a small program I wrote to develop a word
-clock (i.e. a clock displaying the time in form of sentences instead than 
-numbers) for my wife. 
+Chasy (Russian for "clock") is a program aimed to assist the construction of
+word clocks (i.e. a clock displaying the time in form of sentences instead of 
+numbers). 
 
 
 Licence

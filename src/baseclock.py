@@ -1,9 +1,19 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on 14 Apr 2011
+Ancestor for clock plugins.
 
-@author: mac
+All clock plugins should subclass from baseclock.Clock and should provide
+at least the "get_time_phrase" method.
 '''
+
+__author__ = "Mac Ryan"
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
+
 
 class Clock(object):
 
@@ -40,3 +50,10 @@ class Clock(object):
                 phrases.append(phrase + self.get_time_phrase(h, m))
         return phrases
     
+
+def run_as_script():
+    '''Run this code if the file is executed as script.'''
+    print('Module executed as script!')
+
+if __name__ == '__main__':
+    run_as_script()

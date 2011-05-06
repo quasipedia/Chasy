@@ -1,12 +1,23 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on 14 Apr 2011
+Clock plugin providing verbose sentences in Russian.
 
-@author: mac
+The emphasis of this clock is on having long sentences and a variety of 
+expressions (e.g.: "midnight" or "noon" instead of "twelve"). Sentences
+are maybe redundant in their formulation but are correct. 
 '''
 
-import utils
 import baseclock
+
+__author__ = "Mac Ryan"
+__credits__ = ["Olga Andronova"]
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
+
 
 class Clock(baseclock.Clock):
     
@@ -15,7 +26,7 @@ class Clock(baseclock.Clock):
     '''
     
     __module_name__ = 'Verbose Russian'
-    __authors__ = 'Mac Ryan, Olga Andronova'
+    __authors__ = 'Mac Ryan, '
     
     def __init__(self):
         self.word_it_is = 'Сейчас'
@@ -186,3 +197,11 @@ class Clock(baseclock.Clock):
             raise(Exception, ' '.join(('Unrecognised time --- ', 
                                        str(hours), ':', str(minutes))))
         return ' '.join(output)
+    
+    
+def run_as_script():
+    '''Run this code if the file is executed as script.'''
+    print('Module executed as script!')
+
+if __name__ == '__main__':
+    run_as_script()

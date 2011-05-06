@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-Created on 15 Apr 2011
-
-@author: mac
+Test suite for the the Chasy program.
 '''
+
 import unittest
 import logic
 import baseclock
 import clocks.verboserussian as verboserussian
+
+__author__ = "Mac Ryan"
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
+
 
 class LogicPrivateUtils(unittest.TestCase):
     

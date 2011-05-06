@@ -582,7 +582,7 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
 &lt;b&gt;A&lt;/b&gt; - Shift word to the left
 &lt;b&gt;D &lt;/b&gt;- Shift word to the right
 
-Shifts are allowed only if the resulting sequence will still be able to generate all the time sentences of the clock.</property>
+Word movements are allowed only if the resulting sequence will still be able to generate all the time sentences of the clock.</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
                 <property name="width_chars">30</property>

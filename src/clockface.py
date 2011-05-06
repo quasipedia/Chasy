@@ -1,13 +1,22 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
 '''
-Created on 4 May 2011
+Provide logic and part of the GUI to manipulate the clockface of the project.
 
-@author: mac
+Mostly this module is about arranging the words in a uniform way on the 
+clockface and make sure sentences will be displayed with words in the correct
+order and no words concatenated.
 '''
 
 import svg
 import rsvg
+
+__author__ = "Mac Ryan"
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
 
 
 class Tile(object):
@@ -91,6 +100,69 @@ class ClockFace(object):
         self.selected_tile = 0
         self.highlight_color = (0, 127, 0)
         
+    def _get_selection_matrix_coords(self):
+        '''
+        Return a tuple indicating the matrix coordinates of the selected tile.
+        '''
+        tile = self.tiles[self.selected_tile][1]
+        return (tile.matrix_x, tile.matrix_y)
+        
+    def _check_movement_limits(self, direction):
+        '''
+        Return True if the selection can be moved in the direction without
+        falling off the clockface. 
+        '''
+        # Left and right limits
+        if direction == 'left' and self.selected_tile == 0 or \
+           direction == 'right' and self.selected_tile == len(self.sequence)-1:
+            return False
+        # Upper and lower limits
+        y = self._get_selection_matrix_coords()[1]
+        if direction == 'up' and y == 0 or \
+           direction == 'down' and y == self.get_matrix_footprint()[1]:
+            return False
+        return True
+    
+    def get_vertical_neighbours(self, best_only=False):
+        '''
+        Return a tuple of tuples with the index of the tiles directly over 
+        (first tuple) and under (second tuple) the selected one.
+        If "best_only" is set, then only the word with the leftmost amongst
+        the words with the most overlapping will be returned for each tuple.
+        '''
+        x, y = self._get_selection_matrix_coords()
+        selected_tile = self.tiles[self.selected_tile][1]
+        occupied_cols = set(range(x, x+len(selected_tile.word)))
+        upper = []
+        lower = []
+        for i, tile in enumerate(self.tiles):
+            tile = tile[1]
+            if tile.matrix_y not in (y-1, y+1):
+                continue
+            overlapping = set(range(tile.matrix_x, 
+                                    tile.matrix_x+len(tile.word))).\
+                                    intersection(occupied_cols)
+            if not overlapping:
+                continue
+            entry = (len(overlapping), i)
+            if tile.matrix_y == y-1:
+                upper.append(entry)
+            else:
+                lower.append(entry)
+        if best_only:
+            upper = (0, 0) if not upper else max(upper)
+            lower = (0, 0) if not lower else max(lower)
+        return (upper, lower)
+                         
+    def get_matrix_footprint(self):
+        '''
+        Return a tuple with the max number of cols and lines taken by the 
+        matrix.
+        '''
+        cols = max([tile[1].matrix_x+len(tile[1].word) for tile in self.tiles])
+        rows = self.tiles[-1][1].matrix_y
+        return (cols, rows) 
+        
     def arrange_sequence(self, sequence=None):
         '''
         Distribute tiles on the clockface without exceeding the clockface size.
@@ -125,29 +197,39 @@ class ClockFace(object):
                     self.tiles[i] = (descriptor, new_tile)
             cursor[0] += wl
             
-    def move_selection(self, direction):
+    def change_selection(self, direction):
         '''
         Change the selected tile of the clockface
         '''
-        if direction == -1 and self.selected_tile == 0 or \
-           direction == +1 and self.selected_tile == len(self.sequence)-1:
-            return
-        self.selected_tile += direction
+        if not self._check_movement_limits(direction):
+            return False
+        updown = self.get_vertical_neighbours(best_only=True)
+        if direction == 'left':
+            self.selected_tile -= 1
+        elif direction == 'right':
+            self.selected_tile += 1
+        elif direction == 'up':
+            self.selected_tile = updown[0][1]
+        elif direction == 'down':
+            self.selected_tile = updown[1][1]
         self.arrange_sequence()
         
-    def shift_selected(self, direction):
+    def move_selected_word(self, direction):
         '''
         Shift the selected tile to either left or right.
         '''
-        if direction == -1 and self.selected_tile == 0 or \
-           direction == +1 and self.selected_tile == len(self.sequence)-1:
-            return
+        if not self._check_movement_limits(direction):
+            return False
         target_pos = self.selected_tile + direction
         swap = self.sequence[target_pos]
         self.sequence[target_pos] = self.sequence[self.selected_tile]
         self.sequence[self.selected_tile] = swap
         self.selected_tile = target_pos
         self.arrange_sequence()
+        
+    def move_current_line(self, direction):
+        if not self._check_movement_limits(direction):
+            return False
         
     def toggle_grid(self):
         '''
@@ -183,12 +265,9 @@ class ClockFace(object):
         self.image_widget.set_from_pixbuf(pixbuf)
         
 
-def test():
-    cf = ClockFace(20, 20)
-    cf.arrange_sequence("I could easily span this stuff over a lot of \
-    lines if I wanted to. But I am kind and I will spare you that.")
-    cf.display()
-    return
+def run_as_script():
+    '''Run this code if the file is executed as script.'''
+    print('Module executed as script!')
 
-if __name__ == '__main__': 
-    test()
+if __name__ == '__main__':
+    run_as_script()

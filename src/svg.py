@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
-"""\
+'''
 SVG.py - Construct/display SVG scenes.
 
 The following code is a lightweight wrapper around SVG files. The metaphor
 is to construct a scene, add objects to it, and then write it to a file
-to display it.
-
-[Improved from: http://code.activestate.com/recipes/325823/]
-"""
+to display it. [Based on: http://code.activestate.com/recipes/325823/]
+'''
 
 import codecs
 import StringIO
 
-display_prog = 'display' # Command to execute to display images.
-      
+__author__ = "Mac Ryan"
+__copyright__ = "Copyright ${year}, Mac Ryan"
+__license__ = "GPL v3"
+__maintainer__ = "Mac Ryan"
+__email__ = "quasipedia@gmail.com"
+__status__ = "Development"
+
+
 class Scene:
     def __init__(self, name="svg", height=400, width=400):
         self.name = name
