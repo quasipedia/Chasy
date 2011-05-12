@@ -7,6 +7,7 @@ Chasy's Graphic User Interface and callbacks.
 import gtk
 import pango
 import logic
+import supseq
 import clockface
 
 __author__ = "Mac Ryan"
@@ -115,12 +116,16 @@ class Gui(object):
         self.dump_window.show()
     
     def on_clockface_auto_distribution_activate(self, widget):
+        # Preliminary dimensional calculations
         seq = self.logic.get_sequence()
         len_seq = sum([len(x.decode('utf-8')) for x in seq.split()])
         size = self.logic.get_minimum_panel_size(len_seq)
-        self.cface = clockface.ClockFace(size[0], size[1], 
+        # Go!
+        sequence = supseq.SuperSequence(seq, 
+                                        self.logic.clock.get_phrases_dump())
+        self.cface = clockface.ClockFace(sequence, size[0], size[1], 
                                          self.clockface_image)
-        self.cface.arrange_sequence(seq)
+        self.cface.arrange_sequence()
         self.cface.display()
         self.clockface_window.show()
     
@@ -138,10 +143,10 @@ class Gui(object):
             self.cface.move_selected_word('left')
         elif unichr(kv) in ('d', 'D'):
             self.cface.move_selected_word('right')
-        elif unichr(kv) in ('w', 'W'):
-            self.cface.move_current_line('up')
-        elif unichr(kv) in ('s', 'S'):
-            self.cface.move_current_line('down')
+#        elif unichr(kv) in ('w', 'W'):
+#            self.cface.move_current_line('up')
+#        elif unichr(kv) in ('s', 'S'):
+#            self.cface.move_current_line('down')
         self.cface.display()
         return True
 

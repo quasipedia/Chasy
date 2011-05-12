@@ -433,27 +433,9 @@ class Logic(object):
                 sequence = new_sequence
             else:
                 break
-        # FINE REDUNDANCY OPTIMISATION
-        callback(phase='Fine redundancy loop', time='Very short! Promised!!')
-        sequence = self.fine_redundancy_filter(sequence, original_phrases, 
-                                               callback)
+        # DONE!
         self.shortest_supersequence = sequence
         return self.shortest_supersequence
-
-    def test_sequence_against_phrases(self, sequence, phrases):
-        '''
-        Test if a given sequence of words can be used to generate all the 
-        time phrases. Return True in case of success:
-        '''
-        sequence = sequence.split()
-        for phrase in phrases:
-            cursor = 0
-            for word in phrase.split():
-                try:
-                    cursor += sequence[cursor:].index(word) + 1
-                except ValueError:
-                    return False
-        return True
 
     def coarse_redundancy_filter(self, sequence, phrases):
         '''
@@ -475,33 +457,6 @@ class Logic(object):
                       if i not in used_words_indexes]:
             sequence.pop(index)
         return ' '.join(sequence)
-
-    def shift_word(self, index, direction, seq_list, phrases, force=False):
-        '''
-        Shift the word at position "index" in the sequence to either right (1) 
-        or left (-1) along the list, if the result would still allow all the 
-        phrases to be created with the new sequence.
-        Return the new sequence if shift has been performed, False otherwise.
-        In case "force" is set to True, the shift is performed anyhow.
-        '''
-        seq_list = seq_list[:]  #prevent to modify the original object
-        word = seq_list.pop(index)
-        seq_list.insert(index + direction, word)
-        if force == True:
-            return seq_list
-        to_test = [phrase for phrase in phrases if word in phrase]
-        if self.test_sequence_against_phrases(' '.join(seq_list), to_test):
-            return seq_list
-        else:
-            return False
-
-    def fine_redundancy_filter(self, sequence, phrases, callback=None):
-        '''
-        Remove unused items from the sequence. Return the filtered sequence.
-        This is an accurate algorithm that check that every duplicated word
-        cannot in fact be used only once.
-        '''
-        return sequence
 
 
 def run_as_script():
