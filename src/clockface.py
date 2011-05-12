@@ -221,9 +221,9 @@ class ClockFace(object):
         '''
         if not self._check_movement_limits(direction):
             return False
-        self.sequence.shift_element(self.selected_element, direction)
-        self.selected_element += +1 if direction == 'right' else -1
-        self.arrange_sequence()
+        if self.sequence.shift_element(self.selected_element, direction):
+            self.selected_element += +1 if direction == 'right' else -1
+            self.arrange_sequence()
                 
     def toggle_grid(self):
         '''

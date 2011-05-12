@@ -6,7 +6,9 @@ Test suite for the the Chasy program.
 
 import unittest
 import logic
+import supseq
 import baseclock
+import copy
 import clocks.verboserussian as verboserussian
 
 __author__ = "Mac Ryan"
@@ -75,6 +77,14 @@ class LogicPublicAPI(unittest.TestCase):
     
     logic = logic.Logic(None, None, True)  #debug configuration
     
+    def check_seq_against_pool(self, seq, pool):
+        '''
+        Helper function for testing the result of the sequencer against
+        the pool of base phrases [a routine living in another class].
+        '''
+        sequence = supseq.SuperSequence(seq, pool)
+        return sequence.sanity_check()
+    
     def testHeuristicBasic(self):
         '''Sequence generation basic test (against known solution)'''
         phrases = ['aaa bbb ccc',
@@ -101,7 +111,7 @@ class LogicPublicAPI(unittest.TestCase):
         #    'eee aaa ggg bbb fff ccc ccc ddd ccc eee ggg'
         # It has an element less! .....WOW! :)
         seq = self.logic.get_sequence(phrases, force_rerun=True)
-        self.assertTrue(self.logic.test_sequence_against_phrases(seq, phrases))
+        self.assertTrue(self.check_seq_against_pool(seq, phrases))
         
     def testHeuristicNonIsomorphic(self):
         '''Sequence generation with few isomoprhic sentences (valid solution)
@@ -118,23 +128,8 @@ class LogicPublicAPI(unittest.TestCase):
                    'no cat is on the carpet',
                    'no logic can hold against ideology']
         seq = self.logic.get_sequence(phrases, force_rerun=True)
-        self.assertTrue(self.logic.test_sequence_against_phrases(seq, phrases))
+        self.assertTrue(self.check_seq_against_pool(seq, phrases))
 
-    def testSequenceTester(self):
-        '''Sequence tester.'''
-        phrases = ["I have many flowers at home",
-                   "I do not have that many animals at the farm",
-                   "I have very few cabbages in the fridge",
-                   "If I have or have not it is none of your business"]
-        ok_seq = """If I do not have or have very not that many few flowers 
-                    animals cabbages at in the home farm fridge it is none 
-                    of your business"""
-        self.assertTrue(self.logic.test_sequence_against_phrases(ok_seq, 
-                                                                 phrases))
-        ko_seq = ok_seq[0:ok_seq.index('few')] + \
-                 ok_seq[ok_seq.index('few')+4:]
-        self.assertFalse(self.logic.test_sequence_against_phrases(ko_seq,
-                                                                 phrases))
         
     def testCoarseRedundancyLoop(self):
         '''Coarse redundancy filter loop.'''
@@ -160,21 +155,55 @@ class LogicPublicAPI(unittest.TestCase):
                 break
         self.assertEqual(new_sequence, ok_seq)
         
+
+class SuperSequence(unittest.TestCase):
+    
+    '''
+    Test the SueperSequence methods.
+    '''
+    
+    def testSanityCheckBase(self):
+        '''Sanity check base test'''
+        phrases = ["I have many flowers at home",
+                   "I do not have that many animals at the farm",
+                   "I have very few cabbages in the fridge",
+                   "If I have or have not it is none of your business"]
+        ok_seq = """If I do not have or have very not that many few flowers 
+                    animals cabbages at in the home farm fridge it is none 
+                    of your business"""
+        # Test for success
+        seq = supseq.SuperSequence(ok_seq, phrases) 
+        self.assertTrue(seq.sanity_check())
+        # Test for failure
+        ko_seq = ok_seq[0:ok_seq.index('few')] + \
+                 ok_seq[ok_seq.index('few')+4:]
+        seq = supseq.SuperSequence(ko_seq, phrases) 
+        self.assertFalse(seq.sanity_check())
+
+    def testSanityCheckSubstrings(self):
+        '''Identical substrings in other words are ignored'''
+        phrases = ["aaa bbb ccc ddd eee fff"]
+        ko_seq = """aaaxxx bbb ccc ddd eee fff"""
+        seq = supseq.SuperSequence(ko_seq, phrases) 
+        self.assertFalse(seq.sanity_check())
+
     def testShiftingWords(self):
-        '''Shifting words in a list'''
+        '''Shifting words in a list only if possible'''
         phrases = ['I have one dog', 'I have two cats']
-        sequence = 'I have one two dog cats'
-        seq_list = sequence.split()
+        seq = 'I have one two dog cats'
+        sequence = supseq.SuperSequence(seq, phrases)
         # "one" to right
-        self.assertTrue(self.logic.shift_word(2, 1, seq_list, phrases))
+        t = copy.deepcopy(sequence)
+        self.assertTrue(t.shift_element(2, 'right'))
         # "cats" to left
-        self.assertTrue(self.logic.shift_word(5, -1, seq_list, phrases))
+        self.assertTrue(t.shift_element(5, 'left'))
         # "I" to right
-        self.assertFalse(self.logic.shift_word(0, 1, seq_list, phrases))
+        self.assertFalse(t.shift_element(0, 'right'))
         # "have" to left
-        self.assertFalse(self.logic.shift_word(1, -1, seq_list, phrases))
+        self.assertFalse(t.shift_element(1, 'left'))
         # "have" to left with force
-        self.assertTrue(self.logic.shift_word(1, -1, seq_list, phrases, True))
+        self.assertTrue(t.shift_element(1, 'left', only_if_sane=False))
+
 
 class BaseClock(unittest.TestCase):
     
