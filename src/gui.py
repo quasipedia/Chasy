@@ -7,8 +7,6 @@ Chasy's Graphic User Interface and callbacks.
 import gtk
 import pango
 import logic
-import supseq
-import clockface
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright ${year}, Mac Ryan"
@@ -91,6 +89,12 @@ class Gui(object):
         
     ##### MENU COMMANDS ######    
     
+    def on_file_save_activate(self, widget):
+        self.logic.save_project()
+    
+    def on_file_open_activate(self, widget):
+        self.logic.load_project()
+    
     def on_dump_full_activate(self, widget):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
         self.__write_in_dump(text)
@@ -111,43 +115,18 @@ class Gui(object):
         self.heuristic_dialogue.show()
         self.logic.get_sequence(callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
-        lines = '\n'.join(self.logic.shortest_supersequence.split())
+        text = self.logic.supersequence.get_sequence_as_string()
+        lines = '\n'.join(text.split())
         self.dump_buffer.set_text(lines)
         self.dump_window.show()
     
     def on_clockface_auto_distribution_activate(self, widget):
-        # Preliminary dimensional calculations
-        seq = self.logic.get_sequence()
-        len_seq = sum([len(x.decode('utf-8')) for x in seq.split()])
-        size = self.logic.get_minimum_panel_size(len_seq)
-        # Go!
-        sequence = supseq.SuperSequence(seq, 
-                                        self.logic.clock.get_phrases_dump())
-        self.cface = clockface.ClockFace(sequence, size[0], size[1], 
-                                         self.clockface_image)
-        self.cface.arrange_sequence()
-        self.cface.display()
+        self.logic.show_clockface(self.clockface_image)
         self.clockface_window.show()
     
     def on_clockface_window_key_press_event(self, widget, data):
         kv = data.keyval
-        if kv == 65361:  #left arrow
-            self.cface.change_selection('left')
-        elif kv == 65363:  #right arrow
-            self.cface.change_selection('right')
-        elif kv == 65362:
-            self.cface.change_selection('up')
-        elif kv == 65364:
-            self.cface.change_selection('down')
-        elif unichr(kv) in ('a', 'A'):
-            self.cface.move_selected_word('left')
-        elif unichr(kv) in ('d', 'D'):
-            self.cface.move_selected_word('right')
-#        elif unichr(kv) in ('w', 'W'):
-#            self.cface.move_current_line('up')
-#        elif unichr(kv) in ('s', 'S'):
-#            self.cface.move_current_line('down')
-        self.cface.display()
+        self.logic.manipulate_clockface(kv)
         return True
 
     def on_stop_heuristic_button_clicked(self, widget):

@@ -77,22 +77,14 @@ class LogicPublicAPI(unittest.TestCase):
     
     logic = logic.Logic(None, None, True)  #debug configuration
     
-    def check_seq_against_pool(self, seq, pool):
-        '''
-        Helper function for testing the result of the sequencer against
-        the pool of base phrases [a routine living in another class].
-        '''
-        sequence = supseq.SuperSequence(seq, pool)
-        return sequence.sanity_check()
-    
     def testHeuristicBasic(self):
         '''Sequence generation basic test (against known solution)'''
         phrases = ['aaa bbb ccc',
                    'ddd eee fff',
                    'ccc ddd']
         order = 'aaa bbb ccc ddd eee fff'
-        self.assertEqual(self.logic.get_sequence(phrases, force_rerun=True), 
-                                                 order)
+        sequence = self.logic.get_sequence(phrases=phrases, force_rerun=True)
+        self.assertEqual(sequence.get_sequence_as_string(), order)
 
     def testHeuristicTricky(self):
         '''Sequence generation stress test (valid solution):
@@ -111,7 +103,7 @@ class LogicPublicAPI(unittest.TestCase):
         #    'eee aaa ggg bbb fff ccc ccc ddd ccc eee ggg'
         # It has an element less! .....WOW! :)
         seq = self.logic.get_sequence(phrases, force_rerun=True)
-        self.assertTrue(self.check_seq_against_pool(seq, phrases))
+        self.assertTrue(seq.sanity_check())
         
     def testHeuristicNonIsomorphic(self):
         '''Sequence generation with few isomoprhic sentences (valid solution)
@@ -127,8 +119,8 @@ class LogicPublicAPI(unittest.TestCase):
                    'a cat and a herring are on the floor',
                    'no cat is on the carpet',
                    'no logic can hold against ideology']
-        seq = self.logic.get_sequence(phrases, force_rerun=True)
-        self.assertTrue(self.check_seq_against_pool(seq, phrases))
+        sequence = self.logic.get_sequence(phrases, force_rerun=True)
+        self.assertTrue(sequence.sanity_check())
 
         
     def testCoarseRedundancyLoop(self):

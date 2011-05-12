@@ -12,6 +12,9 @@ import itertools
 import difflib
 import math
 import time
+import supseq
+import clockface
+import pickle
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright ${year}, Mac Ryan"
@@ -65,7 +68,7 @@ class Logic(object):
     
     def __init__(self, parent_menu, callback, debug=False):
         # The program hasn't run a supersequence heuristic just yet...
-        self.shortest_supersequence = None
+        self.supersequence = None
         # The debug mode of using the class is command-line only...
         if debug == True:
             return
@@ -302,7 +305,7 @@ class Logic(object):
             # If invoked during the __init__, the callback won't work!! So...
             except AttributeError:
                 pass
-            self.shortest_supersequence = None
+            self.supersequence = None
     
     def get_phrases_analysis(self):
         '''
@@ -388,8 +391,8 @@ class Logic(object):
         '''
         # It's a long job! If already done, don't re-do it unless specifically
         # told so!
-        if self.shortest_supersequence and force_rerun == False:
-            return self.shortest_supersequence
+        if self.supersequence and force_rerun == False:
+            return self.supersequence
         # No phrases means... all phrases!!!
         if phrases == None:
             phrases = self.clock.get_phrases_dump()
@@ -434,8 +437,8 @@ class Logic(object):
             else:
                 break
         # DONE!
-        self.shortest_supersequence = sequence
-        return self.shortest_supersequence
+        self.supersequence = supseq.SuperSequence(sequence, original_phrases)
+        return self.supersequence
 
     def coarse_redundancy_filter(self, sequence, phrases):
         '''
@@ -457,6 +460,66 @@ class Logic(object):
                       if i not in used_words_indexes]:
             sequence.pop(index)
         return ' '.join(sequence)
+
+    def show_clockface(self, clockface_image):
+        '''
+        Generate and show the clockface interface.
+        '''
+        # Preliminary dimensional calculations
+        seq = self.get_sequence()
+        len_seq = seq.get_length()
+        size = self.get_minimum_panel_size(len_seq)
+        # Go!
+        self.cface = clockface.ClockFace(seq, size[0], size[1], 
+                                         clockface_image)
+        self.cface.arrange_sequence()
+        self.cface.display()
+
+    def manipulate_clockface(self, kv):
+        '''
+        Process input in the clockface interface.
+        '''
+        if kv == 65361:  #left arrow
+            self.cface.change_selection('left')
+        elif kv == 65363:  #right arrow
+            self.cface.change_selection('right')
+        elif kv == 65362:
+            self.cface.change_selection('up')
+        elif kv == 65364:
+            self.cface.change_selection('down')
+        elif unichr(kv) in ('a', 'A'):
+            self.cface.move_selected_word('left')
+        elif unichr(kv) in ('d', 'D'):
+            self.cface.move_selected_word('right')
+#        elif unichr(kv) in ('w', 'W'):
+#            self.cface.move_current_line('up')
+#        elif unichr(kv) in ('s', 'S'):
+#            self.cface.move_current_line('down')
+        self.cface.display()
+        
+    def save_project(self):
+        '''
+        Save to disk the essential data on the project.
+        '''
+        project = dict()
+        project['clock_module'] = self.clock.__module_name__
+        project['supersequence'] = None if not self.supersequence else\
+                                   self.supersequence.get_sequence_as_string()
+        file_ = open('../data/saved.txt', 'w')
+        pickle.dump(project, file_)
+        file_.close()
+        
+    def load_project(self):
+        '''
+        Load a project from disk and regenerate the environment to match it.
+        '''
+        file_ = open('../data/saved.txt', 'r')
+        project = pickle.load(file_)
+        file_.close()
+        self.clock = self.available_modules[project['clock_module']].Clock()
+        self.invoke_refresh()
+        self.supersequence = supseq.SuperSequence(project['supersequence'],
+                                             self.clock.get_phrases_dump())
 
 
 def run_as_script():
