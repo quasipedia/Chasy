@@ -8,7 +8,7 @@ at least the "get_time_phrase" method.
 '''
 
 __author__ = "Mac Ryan"
-__copyright__ = "Copyright ${year}, Mac Ryan"
+__copyright__ = "Copyright 2011, Mac Ryan"
 __license__ = "GPL v3"
 __maintainer__ = "Mac Ryan"
 __email__ = "quasipedia@gmail.com"

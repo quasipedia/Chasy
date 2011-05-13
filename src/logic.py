@@ -17,7 +17,7 @@ import clockface
 import pickle
 
 __author__ = "Mac Ryan"
-__copyright__ = "Copyright ${year}, Mac Ryan"
+__copyright__ = "Copyright 2011, Mac Ryan"
 __license__ = "GPL v3"
 __maintainer__ = "Mac Ryan"
 __email__ = "quasipedia@gmail.com"
@@ -388,6 +388,8 @@ class Logic(object):
         currently active clock module will be used (so the supersequence 
         will be able to display the entire day on the clock).
         - callback is the function to invoke to update progress data in GUI
+        See my own question on StackOverflow:
+        http://stackoverflow.com/questions/5784945
         '''
         # It's a long job! If already done, don't re-do it unless specifically
         # told so!
@@ -461,7 +463,7 @@ class Logic(object):
             sequence.pop(index)
         return ' '.join(sequence)
 
-    def show_clockface(self, clockface_image):
+    def show_clockface(self, clockface_image, spinbutton):
         '''
         Generate and show the clockface interface.
         '''
@@ -471,7 +473,7 @@ class Logic(object):
         size = self.get_minimum_panel_size(len_seq)
         # Go!
         self.cface = clockface.ClockFace(seq, size[0], size[1], 
-                                         clockface_image)
+                                         clockface_image, spinbutton)
         self.cface.arrange_sequence()
         self.cface.display()
 
@@ -496,6 +498,7 @@ class Logic(object):
 #        elif unichr(kv) in ('s', 'S'):
 #            self.cface.move_current_line('down')
         self.cface.display()
+
         
     def save_project(self):
         '''

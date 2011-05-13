@@ -12,7 +12,7 @@ import svg
 import rsvg
 
 __author__ = "Mac Ryan"
-__copyright__ = "Copyright ${year}, Mac Ryan"
+__copyright__ = "Copyright 2011, Mac Ryan"
 __license__ = "GPL v3"
 __maintainer__ = "Mac Ryan"
 __email__ = "quasipedia@gmail.com"
@@ -88,7 +88,7 @@ class ClockFace(object):
     SVG graphic representation of the clockface and methods to alter it.
     '''
     
-    def __init__(self, sequence, cols, rows, image_widget):
+    def __init__(self, sequence, cols, rows, image_widget, spinbutton):
         '''
         Cols and Rows are the number of characters for the clockface.
         - sequence: instance of class SuperSequence
@@ -97,15 +97,17 @@ class ClockFace(object):
         '''
         self.sequence = sequence
         self.image_widget = image_widget
-        max_screen_size = (800, 800)  #Max image size on screen in pixels
-        self.text_size = min(max_screen_size[0]/(cols+3), 
-                             max_screen_size[1]/(rows+3))
+        self.spinbutton = spinbutton
+        self.spinbutton.set_value(cols)
+        self.max_screen_size = (800, 800)  #Max image size on screen in pixels
         self.cols = cols
         self.rows = rows
-        self.scene = svg.Scene('clockface', width=max_screen_size[0], 
-                                            height=max_screen_size[1])
+        self.set_text_size()
+        self.scene = svg.Scene('clockface', width=self.max_screen_size[0], 
+                                            height=self.max_screen_size[1])
         # Selection variables
-        self.highlight_color = (0, 127, 0)
+        self.select_color = (255, 255, 0)
+        self.unselect_color = (255, 255, 255)
         self.selected_element = 0
         
     def _get_selection_matrix_coords(self):
@@ -132,6 +134,10 @@ class ClockFace(object):
             return False
         return True
     
+    def set_text_size(self):
+        self.text_size = min(self.max_screen_size[0]/(self.cols+2), 
+                             self.max_screen_size[1]/(self.rows+3))
+        
     def get_vertical_neighbours(self, best_only=True):
         '''
         Return a tuple the index of the tiles directly over and under 
@@ -149,8 +155,9 @@ class ClockFace(object):
             overlapping = set(range(tile.matrix_x, 
                                     tile.matrix_x+len(elem.word))).\
                                     intersection(occupied_cols)
-            if not overlapping:
-                continue
+            # Non-overlapping words need to be left too, in case a word at the
+            # end of one line has the empty ending of the previous/following
+            # line above or under itself.
             entry = (len(overlapping), i)
             if tile.matrix_y == y-1:
                 upper.append(entry)
@@ -166,10 +173,26 @@ class ClockFace(object):
         Return a tuple with the max number of cols and lines taken by the 
         matrix.
         '''
-        cols = max([elem.tile.matrix_x+len(elem.word) for 
+        cols = max([elem.tile.matrix_x+elem.get_word_length(strip=True) for 
                     elem in self.sequence])
-        rows = self.sequence[-1].tile.matrix_y
+        rows = self.sequence[-1].tile.matrix_y + 1
         return (cols, rows) 
+    
+    def get_stats(self):
+        '''
+        Return clockface statistics.
+        '''
+        stats = {}
+        x, y = self.get_matrix_footprint()
+        stats['width'], stats['height'] = str(x), str(y)
+        stats['ratio'] = "%.2f" % (x*1.0/y)
+        length = self.sequence.get_length()
+        area = x*y
+        wasted = area - length 
+        percentage = int(length*100.0/area)
+        stats['wasted'] = "%d" % wasted
+        stats['optimisation'] = "%d%%" % percentage
+        return stats
         
     def arrange_sequence(self):
         '''
@@ -177,26 +200,32 @@ class ClockFace(object):
         '''
         cursor = [0, 0]  #insertion point of the tile in the matrix
         for i, element in enumerate(self.sequence):
-            wl = len(element.word.decode('utf-8'))
-            if cursor[0] + wl > self.cols:
+            if cursor[0] + element.get_word_length(strip=True) > self.cols:
                 cursor[0] = 0
                 cursor[1] += 1
             is_selected = True if i == self.selected_element else False
+            color = self.select_color if is_selected else self.unselect_color
             # Protohashes are tuples unique for a given position/status
-            protohash = (cursor[:], element.word, is_selected)
+            protohash = (cursor[:], element.word, color)
             try:
                 cached_protohash = element.protohash
             except AttributeError:
                 cached_protohash = None
-            # Modify only tiles that have changed since last arrangement
-            if protohash != cached_protohash:
-                color = (255, 255, 0) if is_selected else (255, 255, 255)
+            # Modify only tiles that have changed since last arrangement but
+            # also check the one left to he selected one (it might need an 
+            # extra space...
+            if protohash != cached_protohash or \
+                          element.get_position() == self.selected_element - 1: 
+                # Autospacing procedure
+                element.word = element.word.strip()
+                if element.test_contact():
+                    element.word += ' '
                 new_tile = Tile(element, 
                                 matrix_x=cursor[0], matrix_y=cursor[1], 
                                 text_size=self.text_size, tile_color=color)
                 new_tile.protohash = protohash
                 element.tile = new_tile
-            cursor[0] += wl
+            cursor[0] += element.get_word_length()
             
     def change_selection(self, direction):
         '''
@@ -224,27 +253,31 @@ class ClockFace(object):
         if self.sequence.shift_element(self.selected_element, direction):
             self.selected_element += +1 if direction == 'right' else -1
             self.arrange_sequence()
-                
-    def toggle_grid(self):
+            
+    def bin_pack(self):
         '''
-        Toggle visibility of the grid.
+        Heuristics for footprint optimisation of the clockface. The name
+        derives from the Bin Packing Problem. According to wikipedia this 
+        implementation should provide at least an OPT + 1 good solution. In
+        other words, the clockface could at worst have a line more than the 
+        optimal (minimal) solution.
+        See http://en.wikipedia.org/wiki/Bin_packing_problem.
         '''
-        self.grid_visible = not self.grid_visible
-        if self.grid_visible:
-            for c in range(self.cols):
-                self.scene.add(svg.Line((c*self.text_size, 0), 
-                                        (c*self.text_size, self.scene.height)))
-            for r in range(self.rows):
-                self.scene.add(svg.Line((0, r*self.text_size), 
-                                        (self.scene.width, r*self.text_size)))
+        # Start for the possible longest word
+        t = self.sequence.get_remaining_elements_by_size(0)
+        for k, v in t.items():
+            print(k, v)
+        # Keep on adding the longest possible word until line complete or stuck
+        # If stuck, backtrace
+        # If complete, move to the next line
         
     def draw_margins(self):
         self.scene.add(svg.Line((self.cols*self.text_size, 0),
                                 (self.cols*self.text_size, 
-                                 self.rows*self.text_size)))
-        self.scene.add(svg.Line((0, self.rows*self.text_size),
-                                (self.cols*self.text_size, 
-                                 self.rows*self.text_size)))
+                                 (self.rows+2)*self.text_size)))
+        self.scene.add(svg.Line((0, (self.rows+1)*self.text_size),
+                                ((self.cols+1)*self.text_size, 
+                                 (self.rows+1)*self.text_size)))
         self.grid_visible=False
 
     def display(self):

@@ -9,7 +9,7 @@ import pango
 import logic
 
 __author__ = "Mac Ryan"
-__copyright__ = "Copyright ${year}, Mac Ryan"
+__copyright__ = "Copyright 2011, Mac Ryan"
 __license__ = "GPL v3"
 __maintainer__ = "Mac Ryan"
 __email__ = "quasipedia@gmail.com"
@@ -44,6 +44,14 @@ class Gui(object):
         self.output_text = self.builder.get_object("output_text")
         self.clockface_window = self.builder.get_object("clockface_window")
         self.clockface_image = self.builder.get_object("clockface_image")
+        self.col_number_adjustment = \
+                self.builder.get_object("col_number_adjustment")
+        self.cf_width_entry = self.builder.get_object("cf_width_entry")
+        self.cf_height_entry = self.builder.get_object("cf_height_entry")
+        self.cf_ratio_entry = self.builder.get_object("cf_ratio_entry")
+        self.cf_wasted_entry = self.builder.get_object("cf_wasted_entry")
+        self.cf_optimisation_entry = \
+                self.builder.get_object("cf_optimisation_entry")
 
         self.hours = 0
         self.minutes = 0
@@ -77,62 +85,7 @@ class Gui(object):
         while gtk.events_pending():
             gtk.main_iteration(False)
     
-    ###### INPUT FOR TESTING TIMES #####
-        
-    def on_hours_value_changed(self, widget):
-        self.hours = int(widget.get_text())
-        self.update_text()
-        
-    def on_minutes_value_changed(self, widget):
-        self.minutes = int(widget.get_text())
-        self.update_text()
-        
-    ##### MENU COMMANDS ######    
-    
-    def on_file_save_activate(self, widget):
-        self.logic.save_project()
-    
-    def on_file_open_activate(self, widget):
-        self.logic.load_project()
-    
-    def on_dump_full_activate(self, widget):
-        text = '\n'.join(self.logic.clock.get_phrases_dump(True))
-        self.__write_in_dump(text)
-        self.dump_window.show()
-
-    def on_dump_textonly_activate(self, widget):
-        text = '\n'.join(self.logic.clock.get_phrases_dump())
-        self.__write_in_dump(text)
-        self.dump_window.show()
-
-    def on_analysis_word_stats_activate(self, widget):
-        stats = self.logic.get_phrases_analysis()
-        self.__write_in_dump(stats, 'courier')
-        self.dump_window.show()
-    
-    def on_clockface_get_heuristics_activate(self, widget):
-        self.msa_progress_bar.set_fraction(0)
-        self.heuristic_dialogue.show()
-        self.logic.get_sequence(callback=self.__update_msa_progress_values)
-        self.heuristic_dialogue.hide()
-        text = self.logic.supersequence.get_sequence_as_string()
-        lines = '\n'.join(text.split())
-        self.dump_buffer.set_text(lines)
-        self.dump_window.show()
-    
-    def on_clockface_auto_distribution_activate(self, widget):
-        self.logic.show_clockface(self.clockface_image)
-        self.clockface_window.show()
-    
-    def on_clockface_window_key_press_event(self, widget, data):
-        kv = data.keyval
-        self.logic.manipulate_clockface(kv)
-        return True
-
-    def on_stop_heuristic_button_clicked(self, widget):
-        self.logic.halt_heuristic = True
-        
-    ##### WINDOWS MANAGEMENT #####
+    ###### WINDOWS MANAGEMENT #####
         
     def on_close_dump_button_clicked(self, widget):
         self.dump_window.hide()
@@ -157,14 +110,105 @@ class Gui(object):
 
     def on_window_destroy(self, widget):
         gtk.main_quit()
+
+    ###### INPUT FOR TESTING TIMES #####
         
-    def on_cfb_save_file_clicked(self, widget):
-        self.cface.scene.write_svg_file('clockface.svg')
+    def on_hours_value_changed(self, widget):
+        self.hours = int(widget.get_text())
+        self.update_text()
         
+    def on_minutes_value_changed(self, widget):
+        self.minutes = int(widget.get_text())
+        self.update_text()
+
     def update_text(self):
         phrase = self.logic.clock.get_time_phrase(self.hours, self.minutes)
         self.output_text.set_text(phrase)
         
+    ###### MENU COMMANDS ######    
+    
+    def on_file_save_activate(self, widget):
+        self.logic.save_project()
+    
+    def on_file_open_activate(self, widget):
+        self.logic.load_project()
+        self.clockface_window.hide()
+    
+    def on_dump_full_activate(self, widget):
+        text = '\n'.join(self.logic.clock.get_phrases_dump(True))
+        self.__write_in_dump(text)
+        self.dump_window.show()
+
+    def on_dump_textonly_activate(self, widget):
+        text = '\n'.join(self.logic.clock.get_phrases_dump())
+        self.__write_in_dump(text)
+        self.dump_window.show()
+
+    def on_analysis_word_stats_activate(self, widget):
+        stats = self.logic.get_phrases_analysis()
+        self.__write_in_dump(stats, 'courier')
+        self.dump_window.show()
+    
+    def on_clockface_get_heuristics_activate(self, widget):
+        self.msa_progress_bar.set_fraction(0)
+        self.heuristic_dialogue.show()
+        self.logic.get_sequence(callback=self.__update_msa_progress_values)
+        self.heuristic_dialogue.hide()
+        if widget != None:  # if the function has been called programmatically
+            text = self.logic.supersequence.get_sequence_as_string()
+            lines = '\n'.join(text.split())
+            self.dump_buffer.set_text(lines)
+            self.dump_window.show()
+    
+    def on_clockface_auto_distribution_activate(self, widget):
+        self.on_clockface_get_heuristics_activate(None)
+        self.logic.show_clockface(self.clockface_image, 
+                                  self.col_number_adjustment)
+        self.clockface_window.show()
+    
+    ###### HEURISTICS #####
+
+    def on_stop_heuristic_button_clicked(self, widget):
+        self.logic.halt_heuristic = True
+        
+    ###### CLOCKFACE-RELATED EVENTS #####
+        
+    def on_clockface_window_key_press_event(self, widget, data):
+        kv = data.keyval
+        self.logic.manipulate_clockface(kv)
+    
+    def on_cfb_save_file_clicked(self, widget):
+        self.logic.cface.scene.write_svg_file('clockface.svg')
+        
+    def on_cfb_common_root_clicked(self, widget):
+        pass
+        
+    def on_cfb_bin_packing_clicked(self, widget):
+        self.logic.cface.bin_pack()
+        
+    def on_col_number_spinbutton_value_changed(self, widget):
+        # ClockFace.__init__ changes the value of the spinbutton, which in turn
+        # trigger this method. But logic.cface is not yet set at this time,
+        # hence the need for the exception handling.
+        try:
+            self.logic.cface.cols = int(widget.get_text())
+            self.logic.cface.rows = int(widget.get_text())
+            self.logic.cface.set_text_size()
+            self.logic.cface.arrange_sequence()
+            self.logic.cface.display()
+        except AttributeError:  
+            pass
+                
+    def on_clockface_image_expose_event(self, widget, data):
+        '''
+        React to any change in the clockface image.
+        '''
+        stats = self.logic.cface.get_stats()
+        self.cf_width_entry.set_text(stats['width'])
+        self.cf_height_entry.set_text(stats['height'])
+        self.cf_optimisation_entry.set_text(stats['optimisation'])
+        self.cf_wasted_entry.set_text(stats['wasted'])
+        self.cf_ratio_entry.set_text(stats['ratio'])
         
 def run_as_script():
     '''Run this code if the file is executed as script.'''
