@@ -191,10 +191,7 @@ class Gui(object):
         # trigger this method. But logic.cface is not yet set at this time,
         # hence the need for the exception handling.
         try:
-            self.logic.cface.cols = int(widget.get_text())
-            self.logic.cface.rows = int(widget.get_text())
-            self.logic.cface.set_text_size()
-            self.logic.cface.arrange_sequence()
+            self.logic.cface.adjust_display_params(int(widget.get_text()))
             self.logic.cface.display()
         except AttributeError:  
             pass

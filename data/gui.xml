@@ -269,7 +269,7 @@
                   <object class="GtkLabel" id="label11">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Number of char slots that will be filled with junk characters. Trailing spaces at the end of the line counts as -1 (one char recovered)</property>
+                    <property name="tooltip_text" translatable="yes">Number of char slots that will be filled with junk characters. Trailing spaces at the end of the line counts as -1 (one char recovered) if they are outside the right margin.</property>
                     <property name="xalign">0</property>
                     <property name="xpad">10</property>
                     <property name="ypad">6</property>

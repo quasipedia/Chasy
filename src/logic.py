@@ -469,12 +469,8 @@ class Logic(object):
         '''
         # Preliminary dimensional calculations
         seq = self.get_sequence()
-        len_seq = seq.get_length()
-        size = self.get_minimum_panel_size(len_seq)
         # Go!
-        self.cface = clockface.ClockFace(seq, size[0], size[1], 
-                                         clockface_image, spinbutton)
-        self.cface.arrange_sequence()
+        self.cface = clockface.ClockFace(seq, clockface_image, spinbutton)
         self.cface.display()
 
     def manipulate_clockface(self, kv):

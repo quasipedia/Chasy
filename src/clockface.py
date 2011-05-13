@@ -8,8 +8,10 @@ clockface and make sure sentences will be displayed with words in the correct
 order and no words concatenated.
 '''
 
+import gtk
 import svg
 import rsvg
+import math
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -88,7 +90,7 @@ class ClockFace(object):
     SVG graphic representation of the clockface and methods to alter it.
     '''
     
-    def __init__(self, sequence, cols, rows, image_widget, spinbutton):
+    def __init__(self, sequence, image_widget, spinbutton):
         '''
         Cols and Rows are the number of characters for the clockface.
         - sequence: instance of class SuperSequence
@@ -98,11 +100,9 @@ class ClockFace(object):
         self.sequence = sequence
         self.image_widget = image_widget
         self.spinbutton = spinbutton
-        self.spinbutton.set_value(cols)
         self.max_screen_size = (800, 800)  #Max image size on screen in pixels
-        self.cols = cols
-        self.rows = rows
-        self.set_text_size()
+        self.adjust_display_params()
+        self.spinbutton.set_value(self.cols)
         self.scene = svg.Scene('clockface', width=self.max_screen_size[0], 
                                             height=self.max_screen_size[1])
         # Selection variables
@@ -134,7 +134,16 @@ class ClockFace(object):
             return False
         return True
     
-    def set_text_size(self):
+    def adjust_display_params(self, cols=None):
+        '''
+        Adjust all those properties used to properly size the clockface
+        and all graphical elements to properly fit the window.
+        '''
+        length = self.sequence.get_char_length()
+        if cols == None:
+            cols = int(math.ceil(math.sqrt(length)))
+        self.cols = cols
+        self.rows = length/cols + 1
         self.text_size = min(self.max_screen_size[0]/(self.cols+2), 
                              self.max_screen_size[1]/(self.rows+3))
         
@@ -186,7 +195,7 @@ class ClockFace(object):
         x, y = self.get_matrix_footprint()
         stats['width'], stats['height'] = str(x), str(y)
         stats['ratio'] = "%.2f" % (x*1.0/y)
-        length = self.sequence.get_length()
+        length = self.sequence.get_char_length()
         area = x*y
         wasted = area - length 
         percentage = int(length*100.0/area)
@@ -242,7 +251,6 @@ class ClockFace(object):
             self.selected_element = updown[0][1]
         elif direction == 'down':
             self.selected_element = updown[1][1]
-        self.arrange_sequence()
         
     def move_selected_word(self, direction):
         '''
@@ -252,7 +260,6 @@ class ClockFace(object):
             return False
         if self.sequence.shift_element(self.selected_element, direction):
             self.selected_element += +1 if direction == 'right' else -1
-            self.arrange_sequence()
             
     def bin_pack(self):
         '''
@@ -263,27 +270,40 @@ class ClockFace(object):
         optimal (minimal) solution.
         See http://en.wikipedia.org/wiki/Bin_packing_problem.
         '''
-        # Start for the possible longest word
-        t = self.sequence.get_remaining_elements_by_size(0)
-        for k, v in t.items():
-            print(k, v)
+        callback = lambda : self.display(force_update=True)
+        # Start from the possible longest word
+        self.sequence.move_remaining_longest_next_to(None)
+        cursor = 0
         # Keep on adding the longest possible word until line complete or stuck
+        while True:
+#            self.arrange_sequence()  #recalculate matrix positions
+            self.display(force_update=True)
+            el = self.sequence[cursor]
+            column = el.tile.matrix_x+el.get_word_length()
+            self.sequence.move_remaining_longest_next_to(cursor, 
+                                                    upper=self.cols-column)
+            cursor += 1
+            if cursor == len(self.sequence) - 1:
+                break
         # If stuck, backtrace
         # If complete, move to the next line
+        self.display(force_update=True)
         
     def draw_margins(self):
-        self.scene.add(svg.Line((self.cols*self.text_size, 0),
-                                (self.cols*self.text_size, 
-                                 (self.rows+2)*self.text_size)))
-        self.scene.add(svg.Line((0, (self.rows+1)*self.text_size),
-                                ((self.cols+1)*self.text_size, 
-                                 (self.rows+1)*self.text_size)))
-        self.grid_visible=False
+        min_x, max_x = 0, self.cols*self.text_size
+        min_y, max_y = 0, self.rows*self.text_size
+        # Vertical
+        self.scene.add(svg.Line((max_x, min_y), (max_x, max_y+self.text_size)))
+        # Horizontal
+        self.scene.add(svg.Line((min_x, max_y), (max_x+self.text_size, max_y)))
 
-    def display(self):
+    def display(self, force_update=False):
         '''
         Display the clockface.
+        - force_update: force gtk to refresh the screen immediately (without
+          leaving the gtk main loop to finish it's signal handling).
         '''
+        self.arrange_sequence()
         self.scene.items = []
         self.draw_margins()
         for elem in self.sequence:
@@ -292,6 +312,9 @@ class ClockFace(object):
         rsvg_handler = rsvg.Handle(data=xml.getvalue())
         pixbuf = rsvg_handler.get_pixbuf()
         self.image_widget.set_from_pixbuf(pixbuf)
+        if force_update:
+            while gtk.events_pending():
+                gtk.main_iteration(False)
         
 
 def run_as_script():
