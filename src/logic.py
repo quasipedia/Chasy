@@ -471,6 +471,7 @@ class Logic(object):
         seq = self.get_sequence()
         # Go!
         self.cface = clockface.ClockFace(seq, clockface_image, spinbutton)
+        spinbutton.set_lower(self.supersequence.get_lenght_longest_elem())
         self.cface.display()
 
     def manipulate_clockface(self, kv):

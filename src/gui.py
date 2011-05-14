@@ -56,7 +56,7 @@ class Gui(object):
         self.hours = 0
         self.minutes = 0
 
-        self.logic = logic.Logic(self.modules_menu, self.update_text)
+        self.logic = logic.Logic(self.modules_menu, self.module_change)
         self.update_text()
         
         self.window.show_all()
@@ -110,6 +110,11 @@ class Gui(object):
 
     def on_window_destroy(self, widget):
         gtk.main_quit()
+        
+    def module_change(self):
+        self.dump_window.hide()
+        self.clockface_window.hide()
+        self.update_text()
 
     ###### INPUT FOR TESTING TIMES #####
         

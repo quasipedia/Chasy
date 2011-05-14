@@ -20,11 +20,11 @@ __status__ = "Development"
 
 
 class LogicPrivateUtils(unittest.TestCase):
-    
+
     '''
     Test all the logic behind the program intelligence.
     '''
-    
+
     logic = logic.Logic(None, None, True)  #debug configuration
     phrases = ["it is five past one",
                "it is one to two",
@@ -41,22 +41,22 @@ class LogicPrivateUtils(unittest.TestCase):
                "it is one o'clock",
                "it is two o'clock",
                "it is three o'clock"]
-    expected_families = [("it is one to two", "it is three to four", 
-                          "it is four to five", "it is five to six", 
+    expected_families = [("it is one to two", "it is three to four",
+                          "it is four to five", "it is five to six",
                           "it is two to three"),
-                         ("it is two o'clock", "it is one o'clock", 
-                          "it is eleven o'clock", "it is three o'clock", 
+                         ("it is two o'clock", "it is one o'clock",
+                          "it is eleven o'clock", "it is three o'clock",
                           "it is twelve o'clock"),
-                         ("it is one past ten", "it is five past one", 
-                          "it is two past nine", "it is four past seven", 
+                         ("it is one past ten", "it is five past one",
+                          "it is two past nine", "it is four past seven",
                           "it is three past eight")]
-    
+
     def testIsomorphicFamilies(self):
         '''Grouping similar phrases together.'''
         families = self.logic._get_isomorphic_families(self.phrases)
         self.assertEqual(len(self.expected_families), len(families))
         families = set([tuple(sorted(fam)) for fam in families])
-        expected_families = set([tuple(sorted(fam)) for fam in 
+        expected_families = set([tuple(sorted(fam)) for fam in
                                                     self.expected_families])
         self.assertEqual(families, expected_families)
 
@@ -70,13 +70,13 @@ class LogicPrivateUtils(unittest.TestCase):
         self.assertEqual(sorted(orphans), sorted(expected_orphans))
 
 class LogicPublicAPI(unittest.TestCase):
-    
+
     '''
     Test all the logic behind the program intelligence.
     '''
-    
+
     logic = logic.Logic(None, None, True)  #debug configuration
-    
+
     def testHeuristicBasic(self):
         '''Sequence generation basic test (against known solution)'''
         phrases = ['aaa bbb ccc',
@@ -96,7 +96,7 @@ class LogicPublicAPI(unittest.TestCase):
         phrases = ['eee aaa bbb ccc', 'ccc ddd eee', 'ccc ccc ccc',
                    'eee fff ggg', 'ggg fff', 'ggg fff ggg']
         # Anecdote: the test was initially designed to run against the known
-        # obviou soulution, which would be: 
+        # obviou soulution, which would be:
         #    'eee aaa bbb ccc ccc ccc ddd eee fff ggg fff ggg'
         # well, during debugging it turned out that the heuristic can find
         # a better, less obvious valid one, which is:
@@ -104,7 +104,7 @@ class LogicPublicAPI(unittest.TestCase):
         # It has an element less! .....WOW! :)
         seq = self.logic.get_sequence(phrases, force_rerun=True)
         self.assertTrue(seq.sanity_check())
-        
+
     def testHeuristicNonIsomorphic(self):
         '''Sequence generation with few isomoprhic sentences (valid solution)
         Tests for a valid superset of unknown length.
@@ -122,61 +122,84 @@ class LogicPublicAPI(unittest.TestCase):
         sequence = self.logic.get_sequence(phrases, force_rerun=True)
         self.assertTrue(sequence.sanity_check())
 
-        
+
     def testCoarseRedundancyLoop(self):
         '''Coarse redundancy filter loop.'''
         phrases = ["I have many flowers at home",
                    "I do not have that many animals at the farm",
                    "I have very few cabbages in the fridge",
                    "If I have or have not it is none of your business"]
-        ok_seq = """If I do not have or have very not that many few flowers 
-                    animals cabbages at in the home farm fridge it is none 
+        ok_seq = """If I do not have or have very not that many few flowers
+                    animals cabbages at in the home farm fridge it is none
                     of your business"""
-        noisy_seq = """If I do not have or have have very not that many few 
-                       flowers inserted snippet here animals cabbages at in 
-                       the home land farm fridge fridge it is none of your 
+        noisy_seq = """If I do not have or have have very not that many few
+                       flowers inserted snippet here animals cabbages at in
+                       the home land farm fridge fridge it is none of your
                        business have"""
         ok_seq = ' '.join(ok_seq.split())
         sequence = noisy_seq
         while True:
-            new_sequence = self.logic.coarse_redundancy_filter(sequence, 
+            new_sequence = self.logic.coarse_redundancy_filter(sequence,
                                                                phrases)
             if len(new_sequence) < len(sequence):
                 sequence = new_sequence
             else:
                 break
         self.assertEqual(new_sequence, ok_seq)
-        
+
+
+class Element(unittest.TestCase):
+
+    '''
+    Test the supseq.Element methods.
+    '''
+
+    def testAutoSpacing(self):
+        '''Can tell if a space is needed between two words.'''
+        phrases = ["It is one o'clock", "It is two o'clock",
+                   "It is three o'clock", "It is four o'clock"]
+        seq = "It is one two three four o'clock"
+        # Basic case
+        t = supseq.SuperSequence(seq, phrases)
+        self.assertTrue(t[0].test_contact())
+        self.assertFalse(t[3].test_contact())
+        self.assertTrue(t[5].test_contact())
+        # Tricky: if autospaces have been added to the words!
+        for i in range(len(t)):
+            t[i].word += ' '
+        self.assertTrue(t[0].test_contact())
+        self.assertFalse(t[3].test_contact())
+        self.assertTrue(t[5].test_contact())
 
 class SuperSequence(unittest.TestCase):
-    
+
     '''
-    Test the SueperSequence methods.
+    Test the supseq.SuperSequence methods.
     '''
-    
+
     def testSanityCheckBase(self):
         '''Sanity check base test'''
         phrases = ["I have many flowers at home",
                    "I do not have that many animals at the farm",
                    "I have very few cabbages in the fridge",
                    "If I have or have not it is none of your business"]
-        ok_seq = """If I do not have or have very not that many few flowers 
-                    animals cabbages at in the home farm fridge it is none 
+        ok_seq = """If I do not have or have very not that many few flowers
+                    animals cabbages at in the home farm fridge it is none
                     of your business"""
         # Test for success
-        seq = supseq.SuperSequence(ok_seq, phrases) 
+        seq = supseq.SuperSequence(ok_seq, phrases)
         self.assertTrue(seq.sanity_check())
         # Test for failure
         ko_seq = ok_seq[0:ok_seq.index('few')] + \
                  ok_seq[ok_seq.index('few')+4:]
-        seq = supseq.SuperSequence(ko_seq, phrases) 
+        seq = supseq.SuperSequence(ko_seq, phrases)
         self.assertFalse(seq.sanity_check())
 
     def testSanityCheckSubstrings(self):
         '''Identical substrings in other words are ignored'''
         phrases = ["aaa bbb ccc ddd eee fff"]
         ko_seq = """aaaxxx bbb ccc ddd eee fff"""
-        seq = supseq.SuperSequence(ko_seq, phrases) 
+        seq = supseq.SuperSequence(ko_seq, phrases)
         self.assertFalse(seq.sanity_check())
 
     def testShiftingWords(self):
@@ -188,35 +211,88 @@ class SuperSequence(unittest.TestCase):
         t = copy.deepcopy(sequence)
         self.assertTrue(t.shift_element(2, 'right'))
         # "cats" to left
+        t = copy.deepcopy(sequence)
         self.assertTrue(t.shift_element(5, 'left'))
         # "I" to right
+        t = copy.deepcopy(sequence)
         self.assertFalse(t.shift_element(0, 'right'))
         # "have" to left
+        t = copy.deepcopy(sequence)
         self.assertFalse(t.shift_element(1, 'left'))
         # "have" to left with force
+        t = copy.deepcopy(sequence)
         self.assertTrue(t.shift_element(1, 'left', only_if_sane=False))
+
+    def testShiftingToPosition(self):
+        '''Shifting words to designated postion'''
+        phrases = ['I have one dog', 'I have two cats']
+        seq = 'I have one two banana carrot dog cats'
+        sequence = supseq.SuperSequence(seq, phrases)
+        # 'cats' before 'two'
+        t = copy.deepcopy(sequence)
+        self.assertFalse(t.shift_element_to_position(-1, 3))
+        new_seq = t.get_sequence_as_string()
+        self.assertEqual(new_seq, 'I have one two cats banana carrot dog')
+        # 'dog' before 'two'
+        t = copy.deepcopy(sequence)
+        self.assertTrue(t.shift_element_to_position(-2, 3))
+        new_seq = t.get_sequence_as_string()
+        self.assertEqual(new_seq, 'I have one dog two banana carrot cats')
+        # 'cats' before 'two' with forcing
+        t = copy.deepcopy(sequence)
+        self.assertTrue(t.shift_element_to_position(-1, 3, only_if_sane=False))
+        new_seq = t.get_sequence_as_string()
+        self.assertEqual(new_seq, 'I have one cats two banana carrot dog')
+        # Shifting to right direction: 'two' after 'carrot'
+        t = copy.deepcopy(sequence)
+        self.assertTrue(t.shift_element_to_position(3, 5))
+        new_seq = t.get_sequence_as_string()
+        self.assertEqual(new_seq, 'I have one banana carrot two dog cats')
+        # Shifting to right direction: 'I' after 'dog'
+        t = copy.deepcopy(sequence)
+        self.assertFalse(t.shift_element_to_position(0, 6))
+        new_seq = t.get_sequence_as_string()
+        self.assertEqual(new_seq, 'I have one two banana carrot dog cats')
+        # Shifting to right direction: 'I' after 'dog' with forcing
+        t = copy.deepcopy(sequence)
+        self.assertTrue(t.shift_element_to_position(0, 6, only_if_sane=False))
+        new_seq = t.get_sequence_as_string()
+        self.assertEqual(new_seq, 'have one two banana carrot dog I cats')
+
+    def testGetBestFit(self):
+        '''Test bin filling heuristics'''
+        phrases = ['I have one dog', 'I have two cats']
+        # Note that there are two possible perfect fits in this sequence:
+        # "two one cats" and "one_ dog two". The second one has a compulsory
+        # space between "one" and "dog" and should *not* be preferred
+        seq = 'I have two one dog cats'
+        t = supseq.SuperSequence(seq, phrases)
+        tmp = t.get_best_fit(10, 2, new_line=True)
+        best_str = ' '.join(el.word for el in tmp[1:])
+        self.assertTrue(tmp[0])
+        self.assertEqual('two one cats', best_str)
 
 
 class BaseClock(unittest.TestCase):
-    
+
     '''
     Test the base clock from which plugins are derived.
     '''
-    
+
     base_clock = baseclock.Clock()
-    
+
     def testWordSelect(self):
         '''Word selection via dictionary with multiple keys.'''
         test_list = {(1, 2, 'a', 'b'):'first',
                      (3, 4, 'c', 'two'):'second',
                      (5,):'third'}
-        # Test retrieval by all keys 
+        # Test retrieval by all keys
         for keys in (test_list):
             for key in keys:
                 word = self.base_clock._word_select(key, test_list)
                 self.assertEqual(word, test_list[keys])
         # Test exception
-        self.assertRaises(Exception, 
+        self.assertRaises(Exception,
                           self.base_clock._word_select, 'xxx', test_list)
 
 
@@ -225,7 +301,7 @@ class Russian(unittest.TestCase):
     Test Russian phrases generation.
     '''
     clock = verboserussian.Clock()
-    
+
     def testRoundHour(self):
         '''Generation of russian "o'clock" sentences.'''
         known_values = {(0, 0):'Сейчас полночь',
@@ -254,14 +330,14 @@ class Russian(unittest.TestCase):
                         (23, 0):'Сейчас ровно одиннадцать часов вечера'}
         for k in known_values:
             self.assertEqual(self.clock.get_time_phrase(*k), known_values[k])
-    
+
     def testToHour(self):
         '''Generation of russian sentences for <30 mins TO the round hour.'''
         known_values = {(1, 55):'Сейчас без пяти минут два ночи',
                         (9, 45):'Сейчас без четверти десять утра'}
         for k in known_values:
             self.assertEqual(self.clock.get_time_phrase(*k), known_values[k])
-    
+
     def testPastHour(self):
         '''Generation of russian sentences for <30 mins FROM the round hour.'''
         known_values = {(8, 22):'Сейчас двадцать две минуты девятого утра',
@@ -269,7 +345,7 @@ class Russian(unittest.TestCase):
                         (9, 15):'Сейчас четверть десятого утра'}
         for k in known_values:
             self.assertEqual(self.clock.get_time_phrase(*k), known_values[k])
-    
+
     def testOlga(self):
         '''Generation of russian sentences against manually verified list.'''
         known_values = {( 0,  0):'Сейчас полночь',
