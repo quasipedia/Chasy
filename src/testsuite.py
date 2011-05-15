@@ -274,6 +274,12 @@ class SuperSequence(unittest.TestCase):
         eee = s[-2]
         s.converge_elements(first_aaa, eee)
         self.assertFalse(s.converge_elements(first_aaa, eee))
+        # Convergence of two adjacent words
+        s = supseq.SuperSequence(sequence, phrases)
+        bbb = s[1]
+        ccc = s[2]
+        self.assertTrue(s.converge_elements(bbb, ccc))
+
 
     def testGetDuplicateItems(self):
         '''Find duplicates in the sequence'''
@@ -293,13 +299,31 @@ class SuperSequence(unittest.TestCase):
         self.assertEqual(len(set(s)), 6)  #...which are different...
         self.assertTrue(s.sanity_check())  #...and the sequence is still sane!
 
-    def testMergeSubstrings(self):
-        '''Merge words which are one a substring of the other'''
-        phrases = ['I have one dog', 'I have two cats', 'I have a bone dog']
-        seq = 'I have a one two bone dog cats'
-        valid = ['I have a bone two dog cats', 'I have a two bone dog cats']
+    def testGetContainingPairs(self):
+        '''Get containing pairs'''
+        # The trickery here is that two same words (cats) should not be
+        # returned as pair.
+        phrases = []
+        seq = 'I have a one two bone dog cats cats'
+        expected = sorted([('have', 'a'), ('bone', 'one'),
+                           ('cats', 'a'), ('cats', 'a')])
         s = supseq.SuperSequence(seq, phrases)
-        s.merge_substrings()
+        tmp = sorted([(a.word, b.word) for a, b in s.get_containing_pairs()])
+        self.assertEqual(tmp, expected)
+
+    def testMergeSubstrings(self):
+        '''Merge words if one contains the other'''
+        # small words to rigth of large ones
+        phrases = ['I have one dog', 'I have two cats', 'I have a bone dog']
+        valid = ['I have a bone two dog cats', 'I have a two bone dog cats']
+        seq = 'I have a one two bone dog cats'
+        s = supseq.SuperSequence(seq, phrases)
+        s.substring_merging_optimisation()
+        self.assertTrue(s.get_sequence_as_string() in valid)
+        # small words to left of large ones
+        seq = 'I have a bone two one dog cats'
+        s = supseq.SuperSequence(seq, phrases)
+        s.substring_merging_optimisation()
         self.assertTrue(s.get_sequence_as_string() in valid)
 
     def testGetBestFit(self):

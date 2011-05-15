@@ -88,7 +88,7 @@
               <object class="GtkTable" id="table1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="n_rows">6</property>
+                <property name="n_rows">7</property>
                 <property name="n_columns">2</property>
                 <child>
                   <object class="GtkLabel" id="label6">
@@ -101,8 +101,8 @@
                     <property name="label" translatable="yes">Actual width (cols):</property>
                   </object>
                   <packing>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
+                    <property name="top_attach">2</property>
+                    <property name="bottom_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -116,8 +116,8 @@
                     <property name="label" translatable="yes">Actual height (rows):</property>
                   </object>
                   <packing>
-                    <property name="top_attach">2</property>
-                    <property name="bottom_attach">3</property>
+                    <property name="top_attach">3</property>
+                    <property name="bottom_attach">4</property>
                   </packing>
                 </child>
                 <child>
@@ -131,8 +131,8 @@
                     <property name="label" translatable="yes">Aspect ratio:</property>
                   </object>
                   <packing>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
                   </packing>
                 </child>
                 <child>
@@ -146,8 +146,8 @@
                     <property name="label" translatable="yes">Optimisation:</property>
                   </object>
                   <packing>
-                    <property name="top_attach">5</property>
-                    <property name="bottom_attach">6</property>
+                    <property name="top_attach">6</property>
+                    <property name="bottom_attach">7</property>
                   </packing>
                 </child>
                 <child>
@@ -166,32 +166,12 @@
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="cf_height_entry">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="editable">False</property>
-                    <property name="invisible_char">•</property>
-                    <property name="xalign">0.5</property>
-                    <property name="invisible_char_set">True</property>
-                    <property name="primary_icon_activatable">False</property>
-                    <property name="secondary_icon_activatable">False</property>
-                    <property name="primary_icon_sensitive">True</property>
-                    <property name="secondary_icon_sensitive">True</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
                     <property name="top_attach">2</property>
                     <property name="bottom_attach">3</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="cf_ratio_entry">
+                  <object class="GtkEntry" id="cf_height_entry">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="editable">False</property>
@@ -211,6 +191,26 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkEntry" id="cf_ratio_entry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="editable">False</property>
+                    <property name="invisible_char">•</property>
+                    <property name="xalign">0.5</property>
+                    <property name="invisible_char_set">True</property>
+                    <property name="primary_icon_activatable">False</property>
+                    <property name="secondary_icon_activatable">False</property>
+                    <property name="primary_icon_sensitive">True</property>
+                    <property name="secondary_icon_sensitive">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkEntry" id="cf_optimisation_entry">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -226,8 +226,8 @@
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
-                    <property name="top_attach">5</property>
-                    <property name="bottom_attach">6</property>
+                    <property name="top_attach">6</property>
+                    <property name="bottom_attach">7</property>
                   </packing>
                 </child>
                 <child>
@@ -242,6 +242,10 @@
                       <attribute name="weight" value="ultraheavy"/>
                     </attributes>
                   </object>
+                  <packing>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="col_number_spinbutton">
@@ -263,6 +267,8 @@
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -276,8 +282,8 @@
                     <property name="label" translatable="yes">Wasted slots:</property>
                   </object>
                   <packing>
-                    <property name="top_attach">4</property>
-                    <property name="bottom_attach">5</property>
+                    <property name="top_attach">5</property>
+                    <property name="bottom_attach">6</property>
                   </packing>
                 </child>
                 <child>
@@ -296,9 +302,15 @@
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
-                    <property name="top_attach">4</property>
-                    <property name="bottom_attach">5</property>
+                    <property name="top_attach">5</property>
+                    <property name="bottom_attach">6</property>
                   </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
+                <child>
+                  <placeholder/>
                 </child>
               </object>
               <packing>
@@ -309,14 +321,14 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="cfb_common_root">
-                <property name="label" translatable="yes">Try common root sequence shrinking</property>
+              <object class="GtkButton" id="cfb_substr_optimisation">
+                <property name="label" translatable="yes">Try sequence optimisation by substring inclusion</property>
                 <property name="height_request">50</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <signal name="clicked" handler="on_cfb_common_root_clicked" swapped="no"/>
+                <signal name="clicked" handler="on_cfb_substr_optimisation_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -326,7 +338,7 @@
             </child>
             <child>
               <object class="GtkButton" id="cfb_bin_packing">
-                <property name="label" translatable="yes">Try bin packing clockface heuristics</property>
+                <property name="label" translatable="yes">Try filling the clockface by bin packing heuristics</property>
                 <property name="height_request">50</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

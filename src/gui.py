@@ -191,8 +191,9 @@ class Gui(object):
     def on_cfb_save_file_clicked(self, widget):
         self.logic.cface.scene.write_svg_file('clockface.svg')
 
-    def on_cfb_common_root_clicked(self, widget):
-        self.logic.supersequence.merge_substrings()
+    def on_cfb_substr_optimisation_clicked(self, widget):
+        self.logic.supersequence.substring_merging_optimisation()
+        self.logic.cface.display()
 
     def on_cfb_bin_packing_clicked(self, widget):
         self.logic.cface.bin_pack()

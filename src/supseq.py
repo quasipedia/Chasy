@@ -84,6 +84,7 @@ class SuperSequence(list):
         for text in sequence.split():
             self.append(Element(self, text))
         self.sanity_pool = sanity_pool[:]  # prevent modification of original
+        self._merged_mapping = {}  # needed if merging optimisation is used
 
     def __what_convert(self, what, target_format):
         '''
@@ -103,6 +104,46 @@ class SuperSequence(list):
             raise BaseException("Param 'what' needs to be Element() or index")
         return ret
 
+    def __force_merge_and_check(self, pos_large, pos_small):
+        '''
+        This is a DANGEROUS method. It merges two words in one, WHITOUT ANY
+        KIND OF CHECK on the sensibility of the action. Only after the merge
+        is done (and NOT REVERSIBLE), check that the sequence is still sane.
+        [This method is thought to be used on cloned, disposable sequences,
+        this is why the elements are passed positionally and not as object
+        reference]
+        '''
+        # self._merged_mapping is a dictionary indicating into what words
+        # [w1, w2, w3, w4...] an original word w0 has been merged.
+        # The format is self._merged_mapping[w0] = [w1, w2, w3, w4...]
+        large = self[pos_large]
+        small = self[pos_small]
+        try:
+            self._merged_mapping[small.word].append(large.word)
+        except KeyError:
+            self._merged_mapping[small.word] = [large.word]
+        self.pop(pos_small)
+        return self.sanity_check()
+
+    def _closest_next_match(self, sequence, word):
+        '''
+        Helper method that returns the first match of "word" in "sequence",
+        choosing - where applicable - between the word "as it is" or any of
+        its mapped representations.
+        '''
+        hits = []
+        to_try = [word]
+        try:
+            to_try += self._merged_mapping[word]
+        except KeyError:  #no mapping for this word
+            pass
+        for w in to_try:
+            try:
+                hits.append(sequence.index(w))
+            except ValueError:
+                pass
+        return None if hits == [] else min(hits)
+
     def sanity_check(self, phrases=None):
         '''
         Test if the sequence can be used to generate all phrases.
@@ -117,9 +158,10 @@ class SuperSequence(list):
             cursor = 0
             for word in phrase.split():
                 try:
-                    # Following strip is for added spaces from clockface
-                    cursor += word_sequence[cursor:].index(word.strip()) + 1
-                except ValueError:
+                    # Following strip() is for added spaces from clockface
+                    cursor += self._closest_next_match(word_sequence[cursor:],
+                                                        word.strip()) + 1
+                except TypeError:  #Triggered by "cursor += None" operation
                     return False
         return True
 
@@ -127,7 +169,7 @@ class SuperSequence(list):
         '''
         Return unicode representation of sequence.
         '''
-        return ' '.join([el.word for el in self])
+        return ' '.join([el.word.strip() for el in self])
 
     def get_char_length(self):
         '''
@@ -206,12 +248,10 @@ class SuperSequence(list):
                                 (repr(el_pos), repr(direction)))
         if only_if_sane:
             # Stage the change and verify the result is still sane...
-            new_seq = SuperSequence(self.get_sequence_as_string(),
-                                    self.sanity_pool)
-            new_seq[el_pos], new_seq[new_pos] = \
-                                    new_seq[new_pos], new_seq[el_pos]
+            scrap = copy.deepcopy(self)
+            scrap[el_pos], scrap[new_pos] = scrap[new_pos], scrap[el_pos]
             # ...if not, return
-            if not new_seq.sanity_check():
+            if not scrap.sanity_check():
                 el = self.__what_convert(what, 'element')
                 el.blocked_by[direction].append(self[new_pos])
                 return False
@@ -291,15 +331,16 @@ class SuperSequence(list):
         two = self.__what_convert(two, 'element')
         # Sort elements according to their order in the sequence
         one, two = sorted([one, two], key = lambda x: x.get_position())
-        # Smartass trick: the logic "or" guarantees that only either e1 or e2
-        # get shifted at each pass [if the first shift returns True, the
-        # if condition is already True and the second shift is neither tried.
-        while self.shift_element(one, 'right') or \
-              self.shift_element(two, 'left'):
-            # if they converged
+        while True:
+            # if they have converged
             if two.get_position() - one.get_position() == 1:
                 return True
-        return False
+            # Smartass trick: the logic "or" guarantees that only either e1 or e2
+            # get shifted at each pass [if the first shift returns True, the
+            # if condition is already True and the second shift is neither tried.
+            if not (self.shift_element(one, 'right') or \
+                   self.shift_element(two, 'left')):
+                return False
 
     def eliminate_redundancies(self, callback=None):
         '''
@@ -330,13 +371,53 @@ class SuperSequence(list):
                     else:
                         break
 
-    def merge_substrings(self):
+    def get_containing_pairs(self):
+        '''
+        Return a list of tuples (containing_string, contained_string).
+        '''
+        decreasing = self.get_remaining_elements_by_size()
+        matches = []
+        for i, large in enumerate(decreasing):
+            for small in decreasing[i+1:]:
+                sws = small.word.strip()
+                lws = large.word.strip()
+                if sws != lws and sws in lws:
+                    matches.append([large, small])
+        return matches
+
+    def merge_elements(self, one, two):
+        '''
+        Return True if the two elements can be safely (still generating all
+        sentences) merged in one. Return False othewise.
+        - one, two: instances of supseq.Element
+        '''
+        if self.converge_elements(one, two):
+            scrap = copy.deepcopy(self)
+            pos_one = one.get_position()
+            pos_two = two.get_position()
+            if scrap.__force_merge_and_check(pos_one, pos_two):
+                merge_result = self.__force_merge_and_check(pos_one, pos_two)
+                assert merge_result == True
+                return True
+        return False
+
+    def substring_merging_optimisation(self):
         '''
         Try to merge together two words if one is a substring of the other.
         Typical example: 'five' and 'twenty-five' or 'eight' and 'eighteen'.
         '''
-        size_list = self.get_remaining_elements_by_size()
-        pass
+        merged_objects = []
+        pairs = self.get_containing_pairs()
+        for one, two in pairs:
+            print("W1-> %s  W2-> %s" % (one.word, two.word))
+            if two in merged_objects:
+                print('already merged')
+                continue
+            if self.merge_elements(one, two):
+                print('merged!')
+                merged_objects.append(two)
+            else:
+                print('unmergeable')
 
     def get_best_fit(self, size, from_, new_line=False, callback=None):
         '''
