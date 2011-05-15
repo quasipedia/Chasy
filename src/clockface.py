@@ -12,6 +12,7 @@ import gtk
 import svg
 import rsvg
 import math
+import time
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -275,18 +276,21 @@ class ClockFace(object):
         # longest words first, there is a good chance that the first perfect
         # fit is also the best one, as it leaves smaller words available, which
         # in turn offer better flexibility.
+        stopwatch = time.time()
         callback = lambda : self.display(force_update=True)
         cursor = 0
         counter = 0
         while cursor < len(self.sequence):
             elements = self.sequence.get_best_fit(self.cols, cursor,
-                                    new_line=True, callback=callback)
+                       new_line=True, callback=callback)
             for el in elements[1:]:  # Skip the 1st item [True/False flag]
                 self.sequence.shift_element_to_position(el, cursor)
                 cursor += 1
             counter += 1
             print("%02d lines processed" % counter)
         self.display(force_update=True)
+        stopwatch = int(round(time.time() - stopwatch))
+        print("TIMING: %02d' %02d\"" % (stopwatch/60, stopwatch%60))
 
     def draw_margins(self):
         min_x, max_x = 0, self.cols*self.text_size

@@ -267,21 +267,25 @@ class SuperSequence(list):
         # (length of best fit found, [el1, el2, el3...])
         closest = [None, None]
         for el in self.get_remaining_elements_by_size(from_):
-            # If el can't be moved
+            # If el is too big, skip
+            if el.get_word_length(strip=True) > size:
+                continue
+            # If el can't be moved, skip
             if self.shift_element_to_position(el, from_) == False:
                 continue
-            # Run callback if present!
+            # The code below gets executed on successful shift only!
+            # Run callback if present (typically: refresh screen)
             if callback:
                 callback()
             taken_space = el.get_word_length(strip=True)
-            solution_without_spaces = True
             if not new_line:
                 if self[from_-1].test_contact():
                     taken_space += 1
-                    solution_without_spaces = False
             # If el filled the space snuggly
             if taken_space == size:
-                return [True and solution_without_spaces, el]
+                # If spaces have to be avoided, and solution has spaces,
+                # flag the solution with False even if it is snug!
+                return [True, el]
             # If the added whitespace pushed the word over the end of the board
             elif taken_space > size:
                 continue
@@ -293,6 +297,7 @@ class SuperSequence(list):
                                  sum(el.get_word_length() for el in x)
             if next_step[0] == True:  #perfect fit downstream!
                 closest = [True, el] + next_step[1:]  #pass it upstream!
+                return closest
             elif next_step[0] == False:  #not perfect but a fit nevertheless
                 # Keep track of the best fit so far
                 if new_size + how_long(next_step[1:]) > how_long(closest[1:]):

@@ -264,8 +264,16 @@ class SuperSequence(unittest.TestCase):
         phrases = ['I have one dog', 'I have two cats']
         # Note that there are two possible perfect fits in this sequence:
         # "two one cats" and "one_ dog two". The second one has a compulsory
-        # space between "one" and "dog" and should *not* be preferred
-        seq = 'I have two one dog cats'
+        # space between "one" and "dog", but gets found first. It should be
+        # discarded when "avoid_spaces" is set to True.
+        seq = 'I have one two dog cats'
+        # With spaces
+        t = supseq.SuperSequence(seq, phrases)
+        tmp = t.get_best_fit(10, 2, new_line=True)
+        best_str = ' '.join(el.word for el in tmp[1:])
+        self.assertTrue(tmp[0])
+        self.assertEqual('one dog two', best_str)
+        # Without spaces
         t = supseq.SuperSequence(seq, phrases)
         tmp = t.get_best_fit(10, 2, new_line=True)
         best_str = ' '.join(el.word for el in tmp[1:])
