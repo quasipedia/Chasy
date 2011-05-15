@@ -30,6 +30,8 @@ class Element(object):
     def __init__(self, sequence, word):
         self.sequence = sequence
         self.word = word.decode('utf-8')
+        # Cache of elements that can block shifting in either direction
+        self.blocked_by = {'left':[], 'right':[]}
         self.tile = None  # this is just a reminder, see ClockFace!
 
     def get_position(self):
@@ -225,11 +227,17 @@ class SuperSequence(list):
         - only_if_sane: perform the shifting only if the resulting seq can
           still generate all the phrases.
         '''
+        # The shift is a no-move!
         if self.__what_convert(what, 'index') == target:
             return True
-        direction = 'right' if target > self.__what_convert(what, 'index') \
-                            else 'left'
+        # Look up cache first!
         el = self.__what_convert(what, 'element')
+        el_pos = self.__what_convert(what, 'index')
+        direction = 'right' if target > el_pos else 'left'
+        start_, stop_ = sorted([el_pos, target])
+        if set(self[start_:stop_]).intersection(set(el.blocked_by[direction])):
+            return False
+        # Try to actually shift the element
         moveable = True
         while moveable:
             # Need to pass "what" as "el" as index(el) will change!!
@@ -292,6 +300,8 @@ class SuperSequence(list):
                         guinea_pig.pop(e1.get_position())
                         if guinea_pig.sanity_check():
                             self.pop(e1.get_position())
+                            break
+                        else:
                             break
 
     def get_best_fit(self, size, from_, new_line=False, callback=None):
