@@ -11,6 +11,8 @@ This module provide a supersequence class with methods for its manipulation,
 storage, modification, testing, etc...
 '''
 
+import copy
+
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
 __license__ = "GPL v3"
@@ -143,6 +145,18 @@ class SuperSequence(list):
         '''
         return max([item.get_word_length(strip=True) for item in self])
 
+    def get_duplicate_words(self):
+        '''
+        Return a list of duplicate words in a sequence.
+        '''
+        word_list = self.get_sequence_as_string().split()
+        word_set = set(word_list)
+        duplicates = []
+        for word in word_set:
+            if word_list.count(word) > 1:
+                duplicates.append(word)
+        return duplicates
+
     def get_adjacent_elements(self, what):
         '''
         Return a tuple with the two elements lying to the left and right
@@ -252,6 +266,33 @@ class SuperSequence(list):
                     continue
                 return el
         return False
+
+    def eliminate_redundancies(self):
+        '''
+        Eliminate redundant words by checking if they can converge next to
+        each other, and then if one of them can be eliminated.
+        '''
+        dup_words = self.get_duplicate_words()
+        for word in dup_words:
+            # Find all elements representing an instance of that word
+            dup_els = []
+            for el in self:
+                if el.word == word:
+                    dup_els.append(el)
+            # Then try to make them converge
+            for i in range(len(dup_els)-1):
+                e1 = dup_els[i]
+                e2 = dup_els[i+1]
+                # Smartass stuff: "or" guarantees only either e1 or e2 shift
+                while self.shift_element(e1, 'right') or \
+                                          self.shift_element(e2, 'left'):
+                    # if they converged
+                    if e2.get_position() - e1.get_position() == 1:
+                        guinea_pig = copy.deepcopy(self)
+                        guinea_pig.pop(e1.get_position())
+                        if guinea_pig.sanity_check():
+                            self.pop(e1.get_position())
+                            break
 
     def get_best_fit(self, size, from_, new_line=False, callback=None):
         '''

@@ -438,8 +438,11 @@ class Logic(object):
                 sequence = new_sequence
             else:
                 break
-        # DONE!
+        # FINE REDUNDANCY OPTIMISATION
+        callback(phase='Fine redundancy loop', time='This is the last step!')
         self.supersequence = supseq.SuperSequence(sequence, original_phrases)
+        self.supersequence.eliminate_redundancies()
+        # DONE!
         return self.supersequence
 
     def coarse_redundancy_filter(self, sequence, phrases):
