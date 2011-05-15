@@ -184,13 +184,15 @@ class Gui(object):
 
     def on_clockface_window_key_press_event(self, widget, data):
         kv = data.keyval
-        self.logic.manipulate_clockface(kv)
+        # Stop signal propagation if handled
+        if self.logic.manipulate_clockface(kv):
+            return True
 
     def on_cfb_save_file_clicked(self, widget):
         self.logic.cface.scene.write_svg_file('clockface.svg')
 
     def on_cfb_common_root_clicked(self, widget):
-        pass
+        self.logic.supersequence.merge_substrings()
 
     def on_cfb_bin_packing_clicked(self, widget):
         self.logic.cface.bin_pack()

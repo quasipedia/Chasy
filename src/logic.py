@@ -441,7 +441,7 @@ class Logic(object):
         # FINE REDUNDANCY OPTIMISATION
         callback(phase='Fine redundancy loop', time='This is the last step!')
         self.supersequence = supseq.SuperSequence(sequence, original_phrases)
-        self.supersequence.eliminate_redundancies()
+        self.supersequence.eliminate_redundancies(callback)
         # DONE!
         return self.supersequence
 
@@ -480,6 +480,7 @@ class Logic(object):
     def manipulate_clockface(self, kv):
         '''
         Process input in the clockface interface.
+        Return True if the key event has been handled.
         '''
         if kv == 65361:  #left arrow
             self.cface.change_selection('left')
@@ -497,7 +498,10 @@ class Logic(object):
 #            self.cface.move_current_line('up')
 #        elif unichr(kv) in ('s', 'S'):
 #            self.cface.move_current_line('down')
+        else:
+            return False
         self.cface.display()
+        return True
 
 
     def save_project(self):

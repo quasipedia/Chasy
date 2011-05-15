@@ -259,6 +259,22 @@ class SuperSequence(unittest.TestCase):
         new_seq = t.get_sequence_as_string()
         self.assertEqual(new_seq, 'have one two banana carrot dog I cats')
 
+    def testConvergence(self):
+        '''Make two elements converge'''
+        phrases = ['aaa bbb ccc', 'ccc ddd eee']
+        sequence = 'aaa bbb ccc ddd eee aaa'
+        # Possible convergence
+        s = supseq.SuperSequence(sequence, phrases)
+        first_aaa = s[0]
+        second_aaa = s[-1]
+        self.assertTrue(s.converge_elements(first_aaa, second_aaa))
+        # Impossible convergence
+        s = supseq.SuperSequence(sequence, phrases)
+        first_aaa = s[0]
+        eee = s[-2]
+        s.converge_elements(first_aaa, eee)
+        self.assertFalse(s.converge_elements(first_aaa, eee))
+
     def testGetDuplicateItems(self):
         '''Find duplicates in the sequence'''
         phrases = []
@@ -276,6 +292,15 @@ class SuperSequence(unittest.TestCase):
         self.assertEqual(len(s), 6)  #only 6 elements...
         self.assertEqual(len(set(s)), 6)  #...which are different...
         self.assertTrue(s.sanity_check())  #...and the sequence is still sane!
+
+    def testMergeSubstrings(self):
+        '''Merge words which are one a substring of the other'''
+        phrases = ['I have one dog', 'I have two cats', 'I have a bone dog']
+        seq = 'I have a one two bone dog cats'
+        valid = ['I have a bone two dog cats', 'I have a two bone dog cats']
+        s = supseq.SuperSequence(seq, phrases)
+        s.merge_substrings()
+        self.assertTrue(s.get_sequence_as_string() in valid)
 
     def testGetBestFit(self):
         '''Test bin filling heuristics'''

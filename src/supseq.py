@@ -163,20 +163,24 @@ class SuperSequence(list):
         '''
         Return a tuple with the two elements lying to the left and right
         of the one passed as parameter.
-        - what: instance of Element() or index index in SuperSeq
+        - what: instance of Element() or index in SuperSeq
         '''
         ref = self.__what_convert(what, 'index')
         left = None if ref == 0 else self[ref-1]
         right = None if ref == len(self) else self[ref+1]
         return (left, right)
 
-    def get_remaining_elements_by_size(self, what):
+    def get_remaining_elements_by_size(self, what=None):
         '''
         Return a list of elements right of "what" decreasingly ordered by
-        word length.
-        - what: instance of Element() or index index in SuperSeq
+        word length. If no "what" element is given, the entire sequence is
+        processed.
+        - what: instance of Element() or index index in SuperSeq.
         '''
-        el_pos = self.__what_convert(what, 'index')
+        if what == None:
+            el_pos = 0
+        else:
+            el_pos = self.__what_convert(what, 'index')
         return sorted(self[el_pos:],
                       key = lambda x: x.get_word_length(),
                       reverse=True)
@@ -186,7 +190,7 @@ class SuperSequence(list):
         '''
         Shift the selected element to either left or right in the positional
         order of the supersequence.
-        - what: instance of Element() or index index in SuperSeq
+        - what: instance of Element() or index in SuperSeq
         - direction: 'left' or 'right'
         - only_if_sane: perform the shifting only if the resulting seq can
           still generate all the phrases.
@@ -208,6 +212,8 @@ class SuperSequence(list):
                                     new_seq[new_pos], new_seq[el_pos]
             # ...if not, return
             if not new_seq.sanity_check():
+                el = self.__what_convert(what, 'element')
+                el.blocked_by[direction].append(self[new_pos])
                 return False
         # Strip potential spaces introduced for clockface reasons...
         self[el_pos].word = self[el_pos].word.strip()
@@ -223,7 +229,7 @@ class SuperSequence(list):
         Try to shift an element to position "target". Return True on success,
         False otherwise. NOTE!!! 'self' get modified by the attempt, and the
         word gets shifted as much as possible towards it's target destination.
-        - what: instance of Element() or index index in SuperSeq
+        - what: instance of Element() or index in SuperSeq
         - only_if_sane: perform the shifting only if the resulting seq can
           still generate all the phrases.
         '''
@@ -253,7 +259,7 @@ class SuperSequence(list):
         position.
         Return the element that has been shifted or False if no shift resulted
         in an element ending up next to the target.
-        - what_or_none: instance of Element() or index index in SuperSeq or
+        - what_or_none: instance of Element() or index in SuperSeq or
           None. If None is passed in, it means "move to position 0"
         - max_len: the upper lenght limit for the word.
         '''
@@ -275,10 +281,31 @@ class SuperSequence(list):
                 return el
         return False
 
-    def eliminate_redundancies(self):
+    def converge_elements(self, one, two):
+        '''
+        Makes two elements to converge as far as possible. Return True if
+        they reached two adjacent positions, False otherwise.
+        - one, two: instances of Element() or indexes in SuperSeq
+        '''
+        one = self.__what_convert(one, 'element')
+        two = self.__what_convert(two, 'element')
+        # Sort elements according to their order in the sequence
+        one, two = sorted([one, two], key = lambda x: x.get_position())
+        # Smartass trick: the logic "or" guarantees that only either e1 or e2
+        # get shifted at each pass [if the first shift returns True, the
+        # if condition is already True and the second shift is neither tried.
+        while self.shift_element(one, 'right') or \
+              self.shift_element(two, 'left'):
+            # if they converged
+            if two.get_position() - one.get_position() == 1:
+                return True
+        return False
+
+    def eliminate_redundancies(self, callback=None):
         '''
         Eliminate redundant words by checking if they can converge next to
         each other, and then if one of them can be eliminated.
+        - callback is the function to invoke to update progress data in GUI
         '''
         dup_words = self.get_duplicate_words()
         for word in dup_words:
@@ -289,20 +316,27 @@ class SuperSequence(list):
                     dup_els.append(el)
             # Then try to make them converge
             for i in range(len(dup_els)-1):
+                if callback:
+                    callback()
                 e1 = dup_els[i]
                 e2 = dup_els[i+1]
-                # Smartass stuff: "or" guarantees only either e1 or e2 shift
-                while self.shift_element(e1, 'right') or \
-                                          self.shift_element(e2, 'left'):
-                    # if they converged
-                    if e2.get_position() - e1.get_position() == 1:
-                        guinea_pig = copy.deepcopy(self)
-                        guinea_pig.pop(e1.get_position())
-                        if guinea_pig.sanity_check():
-                            self.pop(e1.get_position())
-                            break
-                        else:
-                            break
+                # if they converged
+                if self.converge_elements(e1, e2):
+                    guinea_pig = copy.deepcopy(self)
+                    guinea_pig.pop(e1.get_position())
+                    if guinea_pig.sanity_check():
+                        self.pop(e1.get_position())
+                        break
+                    else:
+                        break
+
+    def merge_substrings(self):
+        '''
+        Try to merge together two words if one is a substring of the other.
+        Typical example: 'five' and 'twenty-five' or 'eight' and 'eighteen'.
+        '''
+        size_list = self.get_remaining_elements_by_size()
+        pass
 
     def get_best_fit(self, size, from_, new_line=False, callback=None):
         '''
