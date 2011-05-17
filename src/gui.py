@@ -210,7 +210,8 @@ class Gui(object):
 
     def on_cfb_generate_cface_clicked(self, widget):
         print('Generate clockface image')
-        self.logic.cface.scene.write_svg_file('clockface.svg')
+#        self.logic.cface.scene.write_svg_file('clockface.svg')
+        self.logic.cface.generate_file()
 
     def on_cfb_substr_optimisation_clicked(self, widget):
         self.heuristic_explanation_label.set_markup(

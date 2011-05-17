@@ -12,7 +12,7 @@ import gtk
 import svg
 import rsvg
 import math
-import time
+import cairo
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -334,6 +334,50 @@ class ClockFace(object):
             while gtk.events_pending():
                 gtk.main_iteration(False)
 
+    def generate_file(self):
+        '''
+        Generate the final clockface file and save it.
+        '''
+        cols, rows = self.get_matrix_footprint()
+        # Get the chars for the output
+        all_chars = ''
+        current_row = 0
+        row_chars = ''
+        for el in self.sequence:
+            if el.tile.matrix_y != current_row:
+                # Remove trailing spaces (might be off the clockface) and/or
+                # add some (line might not touch the edge of the cface either!
+                all_chars += row_chars.rstrip().ljust(cols)
+                current_row = el.tile.matrix_y
+                row_chars = ''
+            row_chars += el.word
+        all_chars += row_chars.ljust(cols)
+        # Define dimensions
+        longer_side = 800
+        scaling = float(longer_side)/max((rows, cols))
+        size_x, size_y = int(cols*scaling), int(rows*scaling)
+        self.surface = cairo.SVGSurface('clockface.svg', size_x, size_y)
+        cr = self.cr = cairo.Context(self.surface)
+        cr.scale(size_x, size_y)  #Normalise as it scales to full size
+        # Start writing!
+        cr.select_font_face("Courier New", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        cr.scale(1.0/cols, 1.0/rows)
+        cr.set_font_size(1.0)
+        fascent, fdescent, fheight, fxadvance, fyadvance = cr.font_extents()
+        cx, cy = 0, 0
+        for letter in all_chars:
+            xbearing, ybearing, width, height, xadvance, yadvance = \
+                                                    cr.text_extents(letter)
+            cr.move_to(cx + 0.5 - xbearing - width / 2,
+                       cy + 0.5 - fdescent + fheight / 2)
+            cr.show_text(letter)
+            if cx == cols-1:
+                cy += 1
+                cx = 0
+            else:
+                cx += 1
+#        cr.show_page()
+        self.surface.finish()
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

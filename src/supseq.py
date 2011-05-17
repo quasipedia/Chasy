@@ -54,7 +54,7 @@ class Element(object):
         elif strip == 'left':
             word = self.word.lstrip()
         elif strip == 'right':
-            word = self.word.lstrip()
+            word = self.word.rstrip()
         elif strip == 'both':
             word = self.word.strip()
         else:
