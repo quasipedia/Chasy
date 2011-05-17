@@ -315,7 +315,7 @@ class SuperSequence(unittest.TestCase):
         '''Merge words if one contains the other'''
         # small words to rigth of large ones
         phrases = ['I have one dog', 'I have two cats', 'I have a bone dog']
-        valid = ['I have a bone two dog cats', 'I have a two bone dog cats']
+        valid = ['I have two cats bone dog']  #uses 'a' from 'cats'
         seq = 'I have a one two bone dog cats'
         s = supseq.SuperSequence(seq, phrases)
         s.substring_merging_optimisation()

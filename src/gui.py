@@ -34,6 +34,8 @@ class Gui(object):
         self.dump_buffer = self.builder.get_object("dump_buffer")
         self.heuristic_dialogue = \
                 self.builder.get_object("heuristic_dialogue")
+        self.heuristic_explanation_label = \
+                self.builder.get_object("heuristic_explanation_label")
         self.msa_progress_bar = self.builder.get_object("heuristic_progress")
         self.msa_time_left_label = \
                 self.builder.get_object("heuristic_time_left_label")
@@ -46,6 +48,8 @@ class Gui(object):
         self.clockface_image = self.builder.get_object("clockface_image")
         self.col_number_adjustment = \
                 self.builder.get_object("col_number_adjustment")
+        self.cf_word_number_entry = \
+                self.builder.get_object("cf_word_number_entry")
         self.cf_width_entry = self.builder.get_object("cf_width_entry")
         self.cf_height_entry = self.builder.get_object("cf_height_entry")
         self.cf_ratio_entry = self.builder.get_object("cf_ratio_entry")
@@ -94,7 +98,7 @@ class Gui(object):
         self.dump_window.hide()
         return True #prevent destruction
 
-    def on_about_activate(self, widget):
+    def prova(self, widget):
         self.about_dialogue.show()
 
     def on_about_dialogue_delete_event(self, widget):
@@ -155,9 +159,18 @@ class Gui(object):
         self.dump_window.show()
 
     def on_clockface_get_heuristics_activate(self, widget):
+        self.heuristic_explanation_label.set_markup(
+        "Chasy is using <i>heuristic</i> to find a sequence of words from " +
+        "which it will be possible to compose all the sentences of the " +
+        "clock. It will take about a minute.\n\n" +
+        "Be advised that although the sequence will work, <b>there is no " +
+        "guarantee it is the shortest possible one</b>. Knowing the grammar " +
+        "of the language in use, is sometimes possible to manually improve " +
+        "the automatic solution.")
         self.msa_progress_bar.set_fraction(0)
         self.heuristic_dialogue.show()
-        tmp = self.logic.get_sequence(callback=self.__update_msa_progress_values)
+        tmp = self.logic.get_sequence(
+                                callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
         if tmp == -1:
             return -1
@@ -178,8 +191,12 @@ class Gui(object):
     ###### HEURISTICS #####
 
     def on_stop_heuristic_button_clicked(self, widget):
-        self.logic.halt_heuristic = True
-
+        try:
+            self.logic.halt_heuristic = True
+            self.logic.supersequence.halt_heuristic = True
+            self.logic.cface.halt_heuristic = True
+        except AttributeError:
+            pass  #some properties of logic aren't initialised immediately
     ###### CLOCKFACE-RELATED EVENTS #####
 
     def on_clockface_window_key_press_event(self, widget, data):
@@ -188,15 +205,41 @@ class Gui(object):
         if self.logic.manipulate_clockface(kv):
             return True
 
-    def on_cfb_save_file_clicked(self, widget):
+    def on_cfb_extra_sentence_clicked(self, widget):
+        print('Insert extra sentence')
+
+    def on_cfb_generate_cface_clicked(self, widget):
+        print('Generate clockface image')
         self.logic.cface.scene.write_svg_file('clockface.svg')
 
     def on_cfb_substr_optimisation_clicked(self, widget):
-        self.logic.supersequence.substring_merging_optimisation()
+        self.heuristic_explanation_label.set_markup(
+        "Chasy is using <i>heuristic</i> (again!) to check if some words " +
+        "can be displayed using only parts of larger encompassing words. It " +
+        "will not take too long... Hold in there!\n\n" +
+        "Be advised that we are still using heuristics here, so <b>it " +
+        "might be possible that some <i>merging</i> that would be " +
+        "possible won't be performed</b>.")
+        self.heuristic_dialogue.show()
+        self.logic.supersequence.substring_merging_optimisation(
+                                callback=self.__update_msa_progress_values)
+        self.heuristic_dialogue.hide()
         self.logic.cface.display()
 
     def on_cfb_bin_packing_clicked(self, widget):
-        self.logic.cface.bin_pack()
+        self.heuristic_explanation_label.set_markup(
+        "Yeah! You guessed! Chasy is using <i>heuristic</i> one more time " +
+        "to try packing your clockface as chock-a-block as she can! It is " +
+        "impossible to estimate the amount of time needed for this " +
+        "but it typically takes no longer than 5 minutes at worse\n\n" +
+        "The usual disclaimer about heuristics applies here too: <b>there " +
+        "is no guarantee the resulting clockface is the best possible " +
+        "one</b>, but further optimisation - if at all possible - is " +
+        "usually trivial for humans.")
+        self.heuristic_dialogue.show()
+        self.logic.cface.bin_pack(heur_callback=\
+                                  self.__update_msa_progress_values)
+        self.heuristic_dialogue.hide()
 
     def on_col_number_spinbutton_value_changed(self, widget):
         # ClockFace.__init__ changes the value of the spinbutton, which in turn
@@ -213,6 +256,7 @@ class Gui(object):
         React to any change in the clockface image.
         '''
         stats = self.logic.cface.get_stats()
+        self.cf_word_number_entry.set_text(stats['word_number'])
         self.cf_width_entry.set_text(stats['width'])
         self.cf_height_entry.set_text(stats['height'])
         self.cf_optimisation_entry.set_text(stats['optimisation'])

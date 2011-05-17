@@ -44,11 +44,21 @@ class Element(object):
                 return i
         raise BaseException('Element is not part of the sequence')
 
-    def get_word_length(self, strip=False):
+    def get_word_length(self, strip=None):
         '''
         Return the length of the word in number of chars to be displayed.
+        - strip: None, 'left', 'right', 'both'
         '''
-        word = self.word if strip == False else self.word.strip()
+        if strip == None:
+            word = self.word
+        elif strip == 'left':
+            word = self.word.lstrip()
+        elif strip == 'right':
+            word = self.word.lstrip()
+        elif strip == 'both':
+            word = self.word.strip()
+        else:
+            raise BaseException('Wrong strip parameter')
         return len(word.decode('utf-8'))
 
     def test_contact(self):
@@ -181,13 +191,13 @@ class SuperSequence(list):
         '''
         Return the stripped length of the shortest word in the sequence.
         '''
-        return min([item.get_word_length(strip=True) for item in self])
+        return min([item.get_word_length(strip='both') for item in self])
 
     def get_lenght_longest_elem(self):
         '''
         Return the stripped length of the shortest word in the sequence.
         '''
-        return max([item.get_word_length(strip=True) for item in self])
+        return max([item.get_word_length(strip='both') for item in self])
 
     def get_duplicate_words(self):
         '''
@@ -308,7 +318,7 @@ class SuperSequence(list):
         assert target_pos < len(self)
         candidates = self.get_remaining_elements_by_size(target_pos)
         for el in candidates:
-            el_length = el.get_word_length(strip=True)
+            el_length = el.get_word_length(strip='both')
             # Only consider elements fitting the limits.
             if max_len and el_length > max_len:
                 continue
@@ -401,14 +411,21 @@ class SuperSequence(list):
                 return True
         return False
 
-    def substring_merging_optimisation(self):
+    def substring_merging_optimisation(self, callback=None):
         '''
         Try to merge together two words if one is a substring of the other.
         Typical example: 'five' and 'twenty-five' or 'eight' and 'eighteen'.
         '''
+        self.halt_heuristic = False
+        if callback:
+            callback(phase='Substring merging', time='---', bar=0)
         merged_objects = []
         pairs = self.get_containing_pairs()
         for one, two in pairs:
+            if self.halt_heuristic == True:
+                return
+            if callback:
+                callback()
             print("W1-> %s  W2-> %s" % (one.word, two.word))
             if two in merged_objects:
                 print('already merged')
@@ -434,7 +451,7 @@ class SuperSequence(list):
         closest = [None, None]
         for el in self.get_remaining_elements_by_size(from_):
             # If el is too big, skip
-            if el.get_word_length(strip=True) > size:
+            if el.get_word_length(strip='both') > size:
                 continue
             # If el can't be moved, skip
             if self.shift_element_to_position(el, from_) == False:
@@ -443,7 +460,7 @@ class SuperSequence(list):
             # Run callback if present (typically: refresh screen)
             if callback:
                 callback()
-            taken_space = el.get_word_length(strip=True)
+            taken_space = el.get_word_length(strip='both')
             if not new_line:
                 if self[from_-1].test_contact():
                     taken_space += 1

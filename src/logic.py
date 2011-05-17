@@ -409,7 +409,8 @@ class Logic(object):
         pass_counter = 0
         while True:
             pass_counter += 1
-            callback(phase='Isomorphic grouping, pass %d' % pass_counter)
+            callback(phase='Isomorphic grouping, pass %d' % pass_counter,
+                     bar = 0)
             families = self._get_isomorphic_families(phrases, callback)
             if families == -1:
                 return -1
@@ -494,10 +495,10 @@ class Logic(object):
             self.cface.move_selected_word('left')
         elif unichr(kv) in ('d', 'D'):
             self.cface.move_selected_word('right')
-#        elif unichr(kv) in ('w', 'W'):
-#            self.cface.move_current_line('up')
-#        elif unichr(kv) in ('s', 'S'):
-#            self.cface.move_current_line('down')
+        elif unichr(kv) in ('w', 'W'):
+            self.cface.change_prepended_spaces(+1)
+        elif unichr(kv) in ('s', 'S'):
+            self.cface.change_prepended_spaces(-1)
         else:
             return False
         self.cface.display()

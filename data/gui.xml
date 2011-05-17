@@ -307,10 +307,33 @@
                   </packing>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkLabel" id="label12">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Number of words in the sequence forming the clockface.</property>
+                    <property name="xalign">0</property>
+                    <property name="xpad">10</property>
+                    <property name="ypad">6</property>
+                    <property name="label" translatable="yes">Words in sequence:</property>
+                  </object>
                 </child>
                 <child>
-                  <placeholder/>
+                  <object class="GtkEntry" id="cf_word_number_entry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="editable">False</property>
+                    <property name="invisible_char">•</property>
+                    <property name="xalign">0.5</property>
+                    <property name="invisible_char_set">True</property>
+                    <property name="primary_icon_activatable">False</property>
+                    <property name="secondary_icon_activatable">False</property>
+                    <property name="primary_icon_sensitive">True</property>
+                    <property name="secondary_icon_sensitive">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                  </packing>
                 </child>
               </object>
               <packing>
@@ -327,6 +350,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Try to use longer words that include shorter words as substrings for displaying both (example: 'fourteen' and 'four')</property>
                 <property name="use_action_appearance">False</property>
                 <signal name="clicked" handler="on_cfb_substr_optimisation_clicked" swapped="no"/>
               </object>
@@ -343,6 +367,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Try to optimise the use of clockface surface by packing words in a compact way (heuristics).</property>
                 <property name="use_action_appearance">False</property>
                 <signal name="clicked" handler="on_cfb_bin_packing_clicked" swapped="no"/>
               </object>
@@ -353,19 +378,36 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="cfb_save_file">
+              <object class="GtkButton" id="cfb_extra_sentence">
+                <property name="label" translatable="yes">Add extra sentence</property>
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="tooltip_text" translatable="yes">Add an extra user-generated sentence to the clockface</property>
+                <property name="use_action_appearance">False</property>
+                <signal name="clicked" handler="on_cfb_extra_sentence_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="cfb_generate_cface">
                 <property name="label" translatable="yes">Save SVG file</property>
                 <property name="height_request">50</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
-                <signal name="clicked" handler="on_cfb_save_file_clicked" swapped="no"/>
+                <signal name="clicked" handler="on_cfb_generate_cface_clicked" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">4</property>
+                <property name="position">5</property>
               </packing>
             </child>
             <child>
@@ -375,9 +417,13 @@
                 <property name="label" translatable="yes">Use &lt;b&gt;arrows&lt;/b&gt; to move cursor.
 
 &lt;b&gt;A&lt;/b&gt; - Shift word to the left
-&lt;b&gt;D &lt;/b&gt;- Shift word to the right
+&lt;b&gt;D&lt;/b&gt; - Shift word to the right
+&lt;b&gt;W&lt;/b&gt; - Prepend a space
+&lt;b&gt;S&lt;/b&gt; - Remove prepended space
 
-Word movements are allowed only if the resulting sequence will still be able to generate all the time sentences of the clock.</property>
+Word movements are allowed only if the resulting sequence will still be able to generate all the time sentences of the clock.
+
+All prepended spaces of a word are removed if the word is shifted.</property>
                 <property name="use_markup">True</property>
                 <property name="wrap">True</property>
                 <property name="width_chars">30</property>
@@ -385,7 +431,7 @@ Word movements are allowed only if the resulting sequence will still be able to 
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">5</property>
+                <property name="position">6</property>
               </packing>
             </child>
           </object>
@@ -531,7 +577,7 @@ Word movements are allowed only if the resulting sequence will still be able to 
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkLabel" id="label1">
+              <object class="GtkLabel" id="heuristic_explanation_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="xalign">0.10000000149011612</property>
@@ -872,7 +918,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <property name="use_action_appearance">False</property>
                 <property name="label" translatable="yes">_About</property>
                 <property name="use_underline">True</property>
-                <signal name="activate" handler="on_about_activate" swapped="no"/>
+                <signal name="activate" handler="prova" swapped="no"/>
               </object>
             </child>
           </object>

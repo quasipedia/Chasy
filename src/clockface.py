@@ -109,13 +109,13 @@ class ClockFace(object):
         # Selection variables
         self.select_color = (255, 255, 0)
         self.unselect_color = (255, 255, 255)
-        self.selected_element = 0
+        self.selected_el_index = 0
 
     def _get_selection_matrix_coords(self):
         '''
         Return a tuple indicating the matrix coordinates of the selected tile.
         '''
-        tile = self.sequence[self.selected_element].tile
+        tile = self.sequence[self.selected_el_index].tile
         return (tile.matrix_x, tile.matrix_y)
 
     def _check_movement_limits(self, direction):
@@ -124,8 +124,8 @@ class ClockFace(object):
         falling off the clockface.
         '''
         # Left and right limits
-        if direction == 'left' and self.selected_element == 0 or \
-           direction == 'right' and self.selected_element == \
+        if direction == 'left' and self.selected_el_index == 0 or \
+           direction == 'right' and self.selected_el_index == \
            len(self.sequence)-1:
             return False
         # Upper and lower limits
@@ -154,7 +154,7 @@ class ClockFace(object):
         the selected one.
         '''
         x, y = self._get_selection_matrix_coords()
-        selected_element = self.sequence[self.selected_element]
+        selected_element = self.sequence[self.selected_el_index]
         occupied_cols = set(range(x, x+len(selected_element.word)))
         upper = []
         lower = []
@@ -183,7 +183,7 @@ class ClockFace(object):
         Return a tuple with the max number of cols and lines taken by the
         matrix.
         '''
-        cols = max([elem.tile.matrix_x+elem.get_word_length(strip=True) for
+        cols = max([elem.tile.matrix_x+elem.get_word_length(strip='right') for
                     elem in self.sequence])
         rows = self.sequence[-1].tile.matrix_y + 1
         return (cols, rows)
@@ -194,6 +194,7 @@ class ClockFace(object):
         '''
         stats = {}
         x, y = self.get_matrix_footprint()
+        stats['word_number'] = str(len(self.sequence))
         stats['width'], stats['height'] = str(x), str(y)
         stats['ratio'] = "%.2f" % (x*1.0/y)
         length = self.sequence.get_char_length()
@@ -210,10 +211,10 @@ class ClockFace(object):
         '''
         cursor = [0, 0]  #insertion point of the tile in the matrix
         for i, element in enumerate(self.sequence):
-            if cursor[0] + element.get_word_length(strip=True) > self.cols:
+            if cursor[0] + element.get_word_length(strip='both') > self.cols:
                 cursor[0] = 0
                 cursor[1] += 1
-            is_selected = True if i == self.selected_element else False
+            is_selected = True if i == self.selected_el_index else False
             color = self.select_color if is_selected else self.unselect_color
             # Protohashes are tuples unique for a given position/status
             protohash = (cursor[:], element.word, color)
@@ -225,9 +226,9 @@ class ClockFace(object):
             # also check the one left to he selected one (it might need an
             # extra space...
             if protohash != cached_protohash or \
-                          element.get_position() == self.selected_element - 1:
+                          element.get_position() == self.selected_el_index - 1:
                 # Autospacing procedure
-                element.word = element.word.strip()
+                element.word = element.word.rstrip()
                 if element.test_contact():
                     element.word += ' '
                 new_tile = Tile(element,
@@ -245,13 +246,13 @@ class ClockFace(object):
             return False
         updown = self.get_vertical_neighbours(best_only=True)
         if direction == 'left':
-            self.selected_element -= 1
+            self.selected_el_index -= 1
         elif direction == 'right':
-            self.selected_element += 1
+            self.selected_el_index += 1
         elif direction == 'up':
-            self.selected_element = updown[0][1]
+            self.selected_el_index = updown[0][1]
         elif direction == 'down':
-            self.selected_element = updown[1][1]
+            self.selected_el_index = updown[1][1]
 
     def move_selected_word(self, direction):
         '''
@@ -259,10 +260,21 @@ class ClockFace(object):
         '''
         if not self._check_movement_limits(direction):
             return False
-        if self.sequence.shift_element(self.selected_element, direction):
-            self.selected_element += +1 if direction == 'right' else -1
+        if self.sequence.shift_element(self.selected_el_index, direction):
+            self.selected_el_index += +1 if direction == 'right' else -1
 
-    def bin_pack(self):
+    def change_prepended_spaces(self, amount):
+        '''
+        Change the number of a word prepended spaces.
+        '''
+        el = self.sequence[self.selected_el_index]
+        num_spaces = len(el.word[:len(el.word)-len(el.word.lstrip())])
+        if amount == +1 and len(el.word.strip()) < self.cols:
+            el.word = ' ' + el.word
+        elif amount == -1 and num_spaces > 0:
+            el.word = el.word[1:]
+
+    def bin_pack(self, heur_callback=None):
         '''
         Heuristics for footprint optimisation of the clockface. The name
         derives from the Bin Packing Problem. According to wikipedia this
@@ -276,21 +288,24 @@ class ClockFace(object):
         # longest words first, there is a good chance that the first perfect
         # fit is also the best one, as it leaves smaller words available, which
         # in turn offer better flexibility.
-        stopwatch = time.time()
+        if heur_callback:
+            heur_callback(phase='Bin packing', time='---', bar=0)
+        self.halt_heuristic = False
         callback = lambda : self.display(force_update=True)
         cursor = 0
         counter = 0
         while cursor < len(self.sequence):
+            if heur_callback:
+                if self.halt_heuristic == True:
+                    return
+                heur_callback(bar=float(cursor)/len(self.sequence))
             elements = self.sequence.get_best_fit(self.cols, cursor,
                        new_line=True, callback=callback)
             for el in elements[1:]:  # Skip the 1st item [True/False flag]
                 self.sequence.shift_element_to_position(el, cursor)
                 cursor += 1
             counter += 1
-            print("%02d lines processed" % counter)
         self.display(force_update=True)
-        stopwatch = int(round(time.time() - stopwatch))
-        print("TIMING: %02d' %02d\"" % (stopwatch/60, stopwatch%60))
 
     def draw_margins(self):
         min_x, max_x = 0, self.cols*self.text_size
