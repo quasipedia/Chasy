@@ -70,7 +70,7 @@ class Gui(object):
 
         # VIRTUAL WORDCLOCK
         self.vclock_window = self.builder.get_object("virtualclock_window")
-        self.vclock_cface = self.builder.get_object("virtual_cface")
+        self.vclock_cface = self.builder.get_object("vclock_drawing")
 
         # INIT VALUES AND STATUS!
         self.hours = 0
@@ -126,6 +126,7 @@ class Gui(object):
     def clock_change(self):
         self.dump_window.hide()
         self.cface_editor_window.hide()
+        self.vclock_window.hide()
         self.update_text()
 
     def on_about_activate(self, widget, data=None):
@@ -137,6 +138,7 @@ class Gui(object):
     def on_file_open_activate(self, widget, data=None):
         self.logic.load_project()
         self.cface_editor_window.hide()
+        self.vclock_window.hide()
 
     def on_dump_full_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
@@ -269,6 +271,7 @@ class Gui(object):
     def on_cfe_generate_virtual_clicked(self, widget, data=None):
         self.logic.generate_vclock(self.vclock_cface)
         self.vclock_window.show()
+        self.logic.vclock.update()
 
     def update_clockface_stats(self, widget, data):
         '''
@@ -284,39 +287,54 @@ class Gui(object):
 
     ##### VIRTUAL WORDCLOCK #####
 
+    def on_vclock_drawing_expose_event(self, widget, data=None):
+        tmp = self.vclock_cface.allocation
+        self.logic.vclock.refresh_params(max_pixel_dimension=min(tmp.width,
+                                                                 tmp.height))
+        self.logic.vclock.update()
+
     def on_virtualclock_window_delete_event(self, widget, data=None):
         self.vclock_window.hide()
         return True
 
     def on_vwc_font_button_font_set(self, widget, data=None):
-        print('font changed', widget.get_font_name())
+        font_face = widget.get_font_name()
+        self.logic.vclock.refresh_params(font_face=font_face)
+        self.logic.vclock.update()
 
     def on_vwc_bkground_button_color_set(self, widget, data=None):
-        print('bkg changed', widget.get_color())
+        self.logic.vclock.refresh_params(bkg_color=widget.get_color())
+        self.logic.vclock.update()
 
     def on_vwc_unlit_button_color_set(self, widget, data=None):
-        print('unlit changed', widget.get_color())
+        self.logic.vclock.refresh_params(unlit_color=widget.get_color())
+        self.logic.vclock.update()
 
     def on_vwc_lit_button_color_set(self, widget, data=None):
-        print('lit changed', widget.get_color())
+        self.logic.vclock.refresh_params(lit_color=widget.get_color())
+        self.logic.vclock.update()
 
     def on_vwc_customlit_button_color_set(self, widget, data=None):
-        print('customlit changed', widget.get_color())
+        self.logic.vclock.refresh_params(custom_color=widget.get_color())
+        self.logic.vclock.update()
 
     def on_vwc_charspace_spin_value_changed(self, widget, data=None):
-        print('charspace changed', int(widget.get_text()))
+        self.logic.vclock.refresh_params(charspace=int(widget.get_text()))
+        self.logic.vclock.update()
 
     def on_vwc_borderspace_spin_value_changed(self, widget, data=None):
-        print('borderspace changed', int(widget.get_text()))
+        self.logic.vclock.refresh_params(borderspace=int(widget.get_text()))
+        self.logic.vclock.update()
 
     def on_custom_phrase_combo_changed(self, widget, data=None):
         print('customphrase lit', data)
+        self.logic.vclock.update()
 
     def on_save_cface_button_clicked(self, widget, data=None):
         print('save design', data)
 
     def on_save_screenshot_button_clicked(self, widget, data=None):
-        print('save screenshot', data)
+        self.logic.vclock.get_shot('svg')
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

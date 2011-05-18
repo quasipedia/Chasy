@@ -1044,6 +1044,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
   <object class="GtkWindow" id="virtualclock_window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Virtual WordClock</property>
+    <property name="window_position">center</property>
     <signal name="delete-event" handler="on_virtualclock_window_delete_event" swapped="no"/>
     <child>
       <object class="GtkVBox" id="virtual_wordclock">
@@ -1059,6 +1060,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <property name="can_focus">False</property>
                 <property name="n_rows">7</property>
                 <property name="n_columns">2</property>
+                <property name="column_spacing">5</property>
                 <property name="homogeneous">True</property>
                 <child>
                   <object class="GtkLabel" id="label1">
@@ -1066,13 +1068,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">The background color for the clockface</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Background colour:</property>
                   </object>
                   <packing>
                     <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1089,6 +1091,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="right_attach">2</property>
                     <property name="top_attach">1</property>
                     <property name="bottom_attach">2</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1097,13 +1100,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">How should the character look when not lit</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Unlit chars colour:</property>
                   </object>
                   <packing>
                     <property name="top_attach">2</property>
                     <property name="bottom_attach">3</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1120,6 +1123,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="right_attach">2</property>
                     <property name="top_attach">2</property>
                     <property name="bottom_attach">3</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1128,13 +1132,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Characters in time phrases</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Regular chars colour:</property>
                   </object>
                   <packing>
                     <property name="top_attach">3</property>
                     <property name="bottom_attach">4</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1151,6 +1155,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="right_attach">2</property>
                     <property name="top_attach">3</property>
                     <property name="bottom_attach">4</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1159,13 +1164,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Characters in custom sentences</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Custom chars colour:</property>
                   </object>
                   <packing>
                     <property name="top_attach">4</property>
                     <property name="bottom_attach">5</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1182,6 +1187,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="right_attach">2</property>
                     <property name="top_attach">4</property>
                     <property name="bottom_attach">5</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1190,10 +1196,12 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">The font of the characters displayed</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Font selection:</property>
                   </object>
+                  <packing>
+                    <property name="y_options"></property>
+                  </packing>
                 </child>
                 <child>
                   <object class="GtkFontButton" id="vwc_font_button">
@@ -1201,11 +1209,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
+                    <property name="show_size">False</property>
                     <signal name="font-set" handler="on_vwc_font_button_font_set" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
                     <property name="right_attach">2</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1214,13 +1224,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Spacing between characters expressed as a percentage of the character size</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Char spacing:</property>
                   </object>
                   <packing>
                     <property name="top_attach">5</property>
                     <property name="bottom_attach">6</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1229,13 +1239,13 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">False</property>
                     <property name="tooltip_text" translatable="yes">Spacing around the character matrix expressed as a percentage of the character size</property>
                     <property name="xalign">0</property>
-                    <property name="xpad">10</property>
                     <property name="ypad">5</property>
                     <property name="label" translatable="yes">Extra border:</property>
                   </object>
                   <packing>
                     <property name="top_attach">6</property>
                     <property name="bottom_attach">7</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1256,6 +1266,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="right_attach">2</property>
                     <property name="top_attach">5</property>
                     <property name="bottom_attach">6</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
                 <child>
@@ -1276,20 +1287,22 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="right_attach">2</property>
                     <property name="top_attach">6</property>
                     <property name="bottom_attach">7</property>
+                    <property name="y_options"></property>
                   </packing>
                 </child>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
+                <property name="fill">False</property>
+                <property name="padding">10</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkImage" id="virtual_cface">
+              <object class="GtkDrawingArea" id="vclock_drawing">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="stock">gtk-missing-image</property>
+                <signal name="expose-event" handler="on_vclock_drawing_expose_event" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">True</property>

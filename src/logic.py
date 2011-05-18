@@ -536,12 +536,12 @@ class Logic(object):
         self.supersequence = supseq.SuperSequence(project['supersequence'],
                                              self.clock.get_phrases_dump())
 
-    def generate_vclock(self, image_widget):
+    def generate_vclock(self, drawing_area):
         '''
         Generate the virtual clock.
         '''
         vclock_data = self.cface.get_char_sequence()
-        vclock_data['image_widget']  = image_widget
+        vclock_data['drawing_area']  = drawing_area
         self.vclock = virtualclock.VirtualClock(**vclock_data)
 
 def run_as_script():
