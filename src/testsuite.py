@@ -25,7 +25,7 @@ class LogicPrivateUtils(unittest.TestCase):
     Test all the logic behind the program intelligence.
     '''
 
-    logic = logic.Logic(None, None, True)  #debug configuration
+    logic = logic.Logic(None, None, None, True)  #debug configuration
     phrases = ["it is five past one",
                "it is one to two",
                "it is two to three",
@@ -75,7 +75,7 @@ class LogicPublicAPI(unittest.TestCase):
     Test all the logic behind the program intelligence.
     '''
 
-    logic = logic.Logic(None, None, True)  #debug configuration
+    logic = logic.Logic(None, None, None, True)  #debug configuration
 
     def testHeuristicBasic(self):
         '''Sequence generation basic test (against known solution)'''

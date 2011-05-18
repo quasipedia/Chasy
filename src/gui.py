@@ -28,10 +28,21 @@ class Gui(object):
         self.builder = gtk.Builder()
         self.builder.add_from_file(self.gui_file)
         self.builder.connect_signals(self)
-        self.window = self.builder.get_object("window")
+
+        # MAIN WINDOW
+        self.main_window = self.builder.get_object("main_window")
+        self.modules_menu = self.builder.get_object("modules")
+        self.output_text = self.builder.get_object("output_text") #time phrase
+
+        # ABOUT DIALOGUE
+        self.about_dialogue = self.builder.get_object("about_dialogue")
+
+        # TEXT DUMP
         self.dump_window = self.builder.get_object("dump_window")
         self.dump_textview = self.builder.get_object("dump_textview")
         self.dump_buffer = self.builder.get_object("dump_buffer")
+
+        # HEURISTICS
         self.heuristic_dialogue = \
                 self.builder.get_object("heuristic_dialogue")
         self.heuristic_explanation_label = \
@@ -41,10 +52,10 @@ class Gui(object):
                 self.builder.get_object("heuristic_time_left_label")
         self.msa_phase_label = \
                 self.builder.get_object("heuristic_phase_label")
-        self.about_dialogue = self.builder.get_object("about_dialogue")
-        self.modules_menu = self.builder.get_object("modules")
-        self.output_text = self.builder.get_object("output_text")
-        self.clockface_window = self.builder.get_object("clockface_window")
+
+        # CLOCKFACE EDITOR
+        self.cface_editor_window = \
+                self.builder.get_object("cface_editor_window")
         self.clockface_image = self.builder.get_object("clockface_image")
         self.col_number_adjustment = \
                 self.builder.get_object("col_number_adjustment")
@@ -57,13 +68,17 @@ class Gui(object):
         self.cf_optimisation_entry = \
                 self.builder.get_object("cf_optimisation_entry")
 
+        # VIRTUAL WORDCLOCK
+        self.vclock_window = self.builder.get_object("virtualclock_window")
+        self.vclock_cface = self.builder.get_object("virtual_cface")
+
+        # INIT VALUES AND STATUS!
         self.hours = 0
         self.minutes = 0
-
-        self.logic = logic.Logic(self.modules_menu, self.module_change)
+        self.logic = logic.Logic(self.modules_menu, self.clock_change,
+                                 self.update_clockface_stats)
         self.update_text()
-
-        self.window.show_all()
+        self.main_window.show_all()
 
     ###### HELPER FUNCTIONS #####
 
@@ -89,44 +104,16 @@ class Gui(object):
         while gtk.events_pending():
             gtk.main_iteration(False)
 
-    ###### WINDOWS MANAGEMENT #####
+    ##### MAIN WINDOW #####
 
-    def on_close_dump_button_clicked(self, widget):
-        self.dump_window.hide()
-
-    def on_dump_window_delete_event(self, widget, data):
-        self.dump_window.hide()
-        return True #prevent destruction
-
-    def prova(self, widget):
-        self.about_dialogue.show()
-
-    def on_about_dialogue_delete_event(self, widget):
-        self.about_dialogue.hide()
-        return True
-
-    def on_clockface_window_delete_event(self, widget, data):
-        self.clockface_window.hide()
-        return True
-
-    def on_about_dialogue_response(self, widget, data):
-        self.about_dialogue.hide()
-
-    def on_window_destroy(self, widget):
+    def on_main_window_destroy(self, widget, data=None):
         gtk.main_quit()
 
-    def module_change(self):
-        self.dump_window.hide()
-        self.clockface_window.hide()
-        self.update_text()
-
-    ###### INPUT FOR TESTING TIMES #####
-
-    def on_hours_value_changed(self, widget):
+    def on_hours_value_changed(self, widget, data=None):
         self.hours = int(widget.get_text())
         self.update_text()
 
-    def on_minutes_value_changed(self, widget):
+    def on_minutes_value_changed(self, widget, data=None):
         self.minutes = int(widget.get_text())
         self.update_text()
 
@@ -134,31 +121,39 @@ class Gui(object):
         phrase = self.logic.clock.get_time_phrase(self.hours, self.minutes)
         self.output_text.set_text(phrase)
 
-    ###### MENU COMMANDS ######
+    ##### MAIN MENU #####
 
-    def on_file_save_activate(self, widget):
+    def clock_change(self):
+        self.dump_window.hide()
+        self.cface_editor_window.hide()
+        self.update_text()
+
+    def on_about_activate(self, widget, data=None):
+        self.about_dialogue.show()
+
+    def on_file_save_activate(self, widget, data=None):
         self.logic.save_project()
 
-    def on_file_open_activate(self, widget):
+    def on_file_open_activate(self, widget, data=None):
         self.logic.load_project()
-        self.clockface_window.hide()
+        self.cface_editor_window.hide()
 
-    def on_dump_full_activate(self, widget):
+    def on_dump_full_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
         self.__write_in_dump(text)
         self.dump_window.show()
 
-    def on_dump_textonly_activate(self, widget):
+    def on_dump_textonly_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump())
         self.__write_in_dump(text)
         self.dump_window.show()
 
-    def on_analysis_word_stats_activate(self, widget):
+    def on_analysis_word_stats_activate(self, widget, data=None):
         stats = self.logic.get_phrases_analysis()
         self.__write_in_dump(stats, 'courier')
         self.dump_window.show()
 
-    def on_clockface_get_heuristics_activate(self, widget):
+    def on_clockface_get_heuristics_activate(self, widget, data=None):
         self.heuristic_explanation_label.set_markup(
         "Chasy is using <i>heuristic</i> to find a sequence of words from " +
         "which it will be possible to compose all the sentences of the " +
@@ -180,40 +175,69 @@ class Gui(object):
             self.dump_buffer.set_text(lines)
             self.dump_window.show()
 
-    def on_clockface_auto_distribution_activate(self, widget):
+    def on_clockface_auto_distribution_activate(self, widget, data=None):
         tmp = self.on_clockface_get_heuristics_activate(None)
         if tmp == -1:
             return -1
         self.logic.show_clockface(self.clockface_image,
-                                  self.col_number_adjustment)
-        self.clockface_window.show()
+                                  self.col_number_adjustment,
+                                  self.update_clockface_stats)
+        self.cface_editor_window.show()
 
-    ###### HEURISTICS #####
+    ##### DUMP WINDOW #####
 
-    def on_stop_heuristic_button_clicked(self, widget):
+    def on_close_dump_button_clicked(self, widget, data=None):
+        self.dump_window.hide()
+
+    def on_dump_window_delete_event(self, widget, data):
+        self.dump_window.hide()
+        return True #prevent destruction
+
+    ##### ABOUT DIALOG #####
+
+    def on_about_dialogue_delete_event(self, widget, data=None):
+        self.about_dialogue.hide()
+        return True
+
+    def on_about_dialogue_response(self, widget, data):
+        self.about_dialogue.hide()
+
+    ##### HEURISTICS WINDOW #####
+
+    def on_stop_heuristic_button_clicked(self, widget, data=None):
         try:
             self.logic.halt_heuristic = True
             self.logic.supersequence.halt_heuristic = True
             self.logic.cface.halt_heuristic = True
         except AttributeError:
             pass  #some properties of logic aren't initialised immediately
-    ###### CLOCKFACE-RELATED EVENTS #####
 
-    def on_clockface_window_key_press_event(self, widget, data):
+    ##### CLOCKFACE EDITOR #####
+
+    def on_cface_editor_window_delete_event(self, widget, data):
+        self.cface_editor_window.hide()
+        return True
+
+    def on_col_number_spinbutton_value_changed(self, widget, data=None):
+        # ClockFace.__init__ changes the value of the spinbutton, which in turn
+        # trigger this method. But logic.cface is not yet set at this time,
+        # hence the need for the exception handling.
+        try:
+            self.logic.cface.adjust_display_params(int(widget.get_text()))
+            self.logic.cface.display()
+        except AttributeError:
+            pass
+
+    def on_cface_editor_window_key_press_event(self, widget, data):
         kv = data.keyval
         # Stop signal propagation if handled
         if self.logic.manipulate_clockface(kv):
             return True
 
-    def on_cfb_extra_sentence_clicked(self, widget):
+    def on_cfe_extra_sentence_clicked(self, widget, data=None):
         print('Insert extra sentence')
 
-    def on_cfb_generate_cface_clicked(self, widget):
-        print('Generate clockface image')
-#        self.logic.cface.scene.write_svg_file('clockface.svg')
-        self.logic.cface.generate_file()
-
-    def on_cfb_substr_optimisation_clicked(self, widget):
+    def on_cfe_substr_optimisation_clicked(self, widget, data=None):
         self.heuristic_explanation_label.set_markup(
         "Chasy is using <i>heuristic</i> (again!) to check if some words " +
         "can be displayed using only parts of larger encompassing words. It " +
@@ -227,7 +251,7 @@ class Gui(object):
         self.heuristic_dialogue.hide()
         self.logic.cface.display()
 
-    def on_cfb_bin_packing_clicked(self, widget):
+    def on_cfe_bin_packing_clicked(self, widget, data=None):
         self.heuristic_explanation_label.set_markup(
         "Yeah! You guessed! Chasy is using <i>heuristic</i> one more time " +
         "to try packing your clockface as chock-a-block as she can! It is " +
@@ -242,17 +266,11 @@ class Gui(object):
                                   self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
 
-    def on_col_number_spinbutton_value_changed(self, widget):
-        # ClockFace.__init__ changes the value of the spinbutton, which in turn
-        # trigger this method. But logic.cface is not yet set at this time,
-        # hence the need for the exception handling.
-        try:
-            self.logic.cface.adjust_display_params(int(widget.get_text()))
-            self.logic.cface.display()
-        except AttributeError:
-            pass
+    def on_cfe_generate_virtual_clicked(self, widget, data=None):
+        self.logic.generate_vclock(self.vclock_cface)
+        self.vclock_window.show()
 
-    def on_clockface_image_expose_event(self, widget, data):
+    def update_clockface_stats(self, widget, data):
         '''
         React to any change in the clockface image.
         '''
@@ -263,6 +281,42 @@ class Gui(object):
         self.cf_optimisation_entry.set_text(stats['optimisation'])
         self.cf_wasted_entry.set_text(stats['wasted'])
         self.cf_ratio_entry.set_text(stats['ratio'])
+
+    ##### VIRTUAL WORDCLOCK #####
+
+    def on_virtualclock_window_delete_event(self, widget, data=None):
+        self.vclock_window.hide()
+        return True
+
+    def on_vwc_font_button_font_set(self, widget, data=None):
+        print('font changed', widget.get_font_name())
+
+    def on_vwc_bkground_button_color_set(self, widget, data=None):
+        print('bkg changed', widget.get_color())
+
+    def on_vwc_unlit_button_color_set(self, widget, data=None):
+        print('unlit changed', widget.get_color())
+
+    def on_vwc_lit_button_color_set(self, widget, data=None):
+        print('lit changed', widget.get_color())
+
+    def on_vwc_customlit_button_color_set(self, widget, data=None):
+        print('customlit changed', widget.get_color())
+
+    def on_vwc_charspace_spin_value_changed(self, widget, data=None):
+        print('charspace changed', int(widget.get_text()))
+
+    def on_vwc_borderspace_spin_value_changed(self, widget, data=None):
+        print('borderspace changed', int(widget.get_text()))
+
+    def on_custom_phrase_combo_changed(self, widget, data=None):
+        print('customphrase lit', data)
+
+    def on_save_cface_button_clicked(self, widget, data=None):
+        print('save design', data)
+
+    def on_save_screenshot_button_clicked(self, widget, data=None):
+        print('save screenshot', data)
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

@@ -15,6 +15,8 @@ import time
 import supseq
 import clockface
 import pickle
+import virtualclock
+
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -66,14 +68,15 @@ class Logic(object):
     specific functionality, which is given by individual clock modules.
     '''
 
-    def __init__(self, parent_menu, callback, debug=False):
+    def __init__(self, parent_menu, swap_clock_callback,
+                 cface_modified_callback, debug=False):
         # The program hasn't run a supersequence heuristic just yet...
         self.supersequence = None
         # The debug mode of using the class is command-line only...
         if debug == True:
             return
-        # This callback is used to signal the need for a screen refresh
-        self.invoke_refresh = callback
+        self.swap_clock_callback = swap_clock_callback
+        self.cface_modified_callback = cface_modified_callback
         # Imports all available clock modules and organise a human-readable
         # list of them in the form {'human_name':imported_module_object}
         self.available_modules = {}
@@ -301,7 +304,7 @@ class Logic(object):
         if widget.get_active():
             self.clock = self.available_modules[clock_name].Clock()
             try:
-                self.invoke_refresh()
+                self.swap_clock_callback()
             # If invoked during the __init__, the callback won't work!! So...
             except AttributeError:
                 pass
@@ -467,15 +470,19 @@ class Logic(object):
             sequence.pop(index)
         return ' '.join(sequence)
 
-    def show_clockface(self, clockface_image, spinbutton):
+    def show_clockface(self, clockface_image, col_num_adjustment,
+                       stats_callback):
         '''
         Generate and show the clockface interface.
         '''
         # Preliminary dimensional calculations
         seq = self.get_sequence()
         # Go!
-        self.cface = clockface.ClockFace(seq, clockface_image, spinbutton)
-        spinbutton.set_lower(self.supersequence.get_lenght_longest_elem())
+        self.cface = clockface.ClockFace(seq, clockface_image,
+                                         col_num_adjustment,
+                                         stats_callback=stats_callback)
+        col_num_adjustment.set_lower(\
+                        self.supersequence.get_lenght_longest_elem())
         self.cface.display()
 
     def manipulate_clockface(self, kv):
@@ -525,10 +532,17 @@ class Logic(object):
         project = pickle.load(file_)
         file_.close()
         self.clock = self.available_modules[project['clock_module']].Clock()
-        self.invoke_refresh()
+        self.swap_clock_callback()
         self.supersequence = supseq.SuperSequence(project['supersequence'],
                                              self.clock.get_phrases_dump())
 
+    def generate_vclock(self, image_widget):
+        '''
+        Generate the virtual clock.
+        '''
+        vclock_data = self.cface.get_char_sequence()
+        vclock_data['image_widget']  = image_widget
+        self.vclock = virtualclock.VirtualClock(**vclock_data)
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

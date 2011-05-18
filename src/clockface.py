@@ -91,19 +91,23 @@ class ClockFace(object):
     SVG graphic representation of the clockface and methods to alter it.
     '''
 
-    def __init__(self, sequence, image_widget, spinbutton):
+    def __init__(self, sequence, image_widget, col_num_adjustment,
+                 stats_callback=None):
         '''
         Cols and Rows are the number of characters for the clockface.
         - sequence: instance of class SuperSequence
         - image_widget: image widget for the SVG drawing
-        - cols, rows: columns and raws of the matrix (in # of chars)
+        - col_num_adjustment: the adjustment of the col number
+        - callback: the callback to be called every time the information is
+          changed on the display.
         '''
+        self.stats_callback = stats_callback
         self.sequence = sequence
         self.image_widget = image_widget
-        self.spinbutton = spinbutton
+        self.col_num_adjustment = col_num_adjustment
         self.max_screen_size = (800, 800)  #Max image size on screen in pixels
         self.adjust_display_params()
-        self.spinbutton.set_value(self.cols)
+        self.col_num_adjustment.set_value(self.cols)
         self.scene = svg.Scene('clockface', width=self.max_screen_size[0],
                                             height=self.max_screen_size[1])
         # Selection variables
@@ -330,13 +334,17 @@ class ClockFace(object):
         rsvg_handler = rsvg.Handle(data=xml.getvalue())
         pixbuf = rsvg_handler.get_pixbuf()
         self.image_widget.set_from_pixbuf(pixbuf)
+        self.stats_callback(None, None)
         if force_update:
             while gtk.events_pending():
                 gtk.main_iteration(False)
 
-    def generate_file(self):
+    def get_char_sequence(self):
         '''
-        Generate the final clockface file and save it.
+        Return the clockface (final) design in the form of a a dictionary
+        comprising the essential information needed to plot the image:
+        - chars: all chars on the clockface, with empty slot replaced by spaces
+        - size: tuple (cols, rows)
         '''
         cols, rows = self.get_matrix_footprint()
         # Get the chars for the output
@@ -352,32 +360,9 @@ class ClockFace(object):
                 row_chars = ''
             row_chars += el.word
         all_chars += row_chars.ljust(cols)
-        # Define dimensions
-        longer_side = 800
-        scaling = float(longer_side)/max((rows, cols))
-        size_x, size_y = int(cols*scaling), int(rows*scaling)
-        self.surface = cairo.SVGSurface('clockface.svg', size_x, size_y)
-        cr = self.cr = cairo.Context(self.surface)
-        cr.scale(size_x, size_y)  #Normalise as it scales to full size
-        # Start writing!
-        cr.select_font_face("Courier New", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-        cr.scale(1.0/cols, 1.0/rows)
-        cr.set_font_size(1.0)
-        fascent, fdescent, fheight, fxadvance, fyadvance = cr.font_extents()
-        cx, cy = 0, 0
-        for letter in all_chars:
-            xbearing, ybearing, width, height, xadvance, yadvance = \
-                                                    cr.text_extents(letter)
-            cr.move_to(cx + 0.5 - xbearing - width / 2,
-                       cy + 0.5 - fdescent + fheight / 2)
-            cr.show_text(letter)
-            if cx == cols-1:
-                cy += 1
-                cx = 0
-            else:
-                cx += 1
-#        cr.show_page()
-        self.surface.finish()
+        cface_data = {'chars':all_chars,
+                      'size':(cols, rows)}
+        return cface_data
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''
