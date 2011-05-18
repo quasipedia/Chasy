@@ -83,7 +83,7 @@ class SuperSequence(list):
 
     '''
     Logical representation of a supersequence as a collection of element
-    objects.
+    objects. Inherits from a list class.
     '''
 
     def __init__(self, sequence, sanity_pool):
