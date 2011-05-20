@@ -71,6 +71,8 @@ class Gui(object):
         # VIRTUAL WORDCLOCK
         self.vclock_window = self.builder.get_object("virtualclock_window")
         self.vclock_cface = self.builder.get_object("vclock_drawing")
+        self.vclock_uppercase = self.builder.get_object("vwc_enoforce_upper")
+        self.vclock_lowercase = self.builder.get_object("vwc_enoforce_lower")
 
         # INIT VALUES AND STATUS!
         self.hours = 0
@@ -326,6 +328,22 @@ class Gui(object):
     def on_vwc_borderspace_spin_value_changed(self, widget, data=None):
         value = int(widget.get_text())/100.0
         self.logic.vclock.refresh_params(borderspace=value)
+        self.logic.vclock.update()
+
+    def vwc_enforce_case_toggled(self, widget, data=None):
+        get_case = lambda x : 'lower' if 'lower' in \
+                              gtk.Buildable.get_name(x) else 'upper'
+        new_status = widget.get_active()
+        other_widget = self.vclock_lowercase if \
+                       widget == self.vclock_uppercase else \
+                       self.vclock_uppercase
+        if new_status == True:
+            other_widget.set_active(False)
+            value = get_case(widget)
+            print(gtk.Buildable.get_name(widget))
+        else:
+            value = None
+        self.logic.vclock.refresh_params(case=value)
         self.logic.vclock.update()
 
     def on_custom_phrase_combo_changed(self, widget, data=None):

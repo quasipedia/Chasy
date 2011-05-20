@@ -9,6 +9,7 @@ Generate screenshots and all the files to create the project.
 
 import cairo
 import gtk
+import os
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -37,6 +38,7 @@ class VirtualClock(unicode):
         cls.max_pixel_dimension = 400
         cls.charspace = 1.0
         cls.borderspace = 1.0
+        cls.case = None
         cls.bkg_color = gtk.gdk.Color("#000")
         cls.unlit_color = gtk.gdk.Color("#888")
         cls.lit_color = gtk.gdk.Color("#FFF")
@@ -158,9 +160,12 @@ class VirtualClock(unicode):
         cx, cy = 0, 0
         cr.translate(ems_in_border, ems_in_border)
         for letter in self:
+            if self.case == 'lower':
+                letter = letter.lower()
+            elif self.case == 'upper':
+                letter = letter.upper()
             xbearing, ybearing, width, height, xadvance, yadvance = \
                                                     cr.text_extents(letter)
-            print(em_x, em_y, xbearing, width, fdescent, fheight)
             cr.move_to(cx*ems_in_matrix_unit + 0.5 - xbearing - width / 2,
                        cy*ems_in_matrix_unit + 0.5 - fdescent + fheight / 2)
             cr.show_text(letter)
@@ -170,20 +175,24 @@ class VirtualClock(unicode):
             else:
                 cx += 1
 #        cr.show_page()
-        if not isinstance(surface, gtk.gdk.CairoContext):
-            surface.finish()
 
     def get_shot(self, format):
         '''
         Return a file in either 'svg' or 'png' formats.
         '''
+        fname = 'cface_shot' + '.' + format
         self.refresh_params()
         if format == 'svg':
-            self.surface = cairo.SVGSurface('clockface.svg',
-                                            self.size_x, self.size_y)
+            surface = cairo.SVGSurface(fname, self.size_x, self.size_y)
         else:
             raise BaseException("Allowed file formats: 'svg', 'png'.")
-        self.draw(cairo.Context(self.surface))
+        self.draw(cairo.Context(surface))
+        surface.finish()
+        to_perc = lambda x : str(int(round(x*100)))
+        new_name = '_'.join((self.font_face, str(self.case),
+                             to_perc(self.charspace),
+                             to_perc(self.borderspace))) + '.' + format
+        os.rename(fname, new_name)
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''
