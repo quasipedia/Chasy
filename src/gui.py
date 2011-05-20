@@ -319,11 +319,13 @@ class Gui(object):
         self.logic.vclock.update()
 
     def on_vwc_charspace_spin_value_changed(self, widget, data=None):
-        self.logic.vclock.refresh_params(charspace=int(widget.get_text()))
+        value = int(widget.get_text())/100.0
+        self.logic.vclock.refresh_params(charspace=value)
         self.logic.vclock.update()
 
     def on_vwc_borderspace_spin_value_changed(self, widget, data=None):
-        self.logic.vclock.refresh_params(borderspace=int(widget.get_text()))
+        value = int(widget.get_text())/100.0
+        self.logic.vclock.refresh_params(borderspace=value)
         self.logic.vclock.update()
 
     def on_custom_phrase_combo_changed(self, widget, data=None):

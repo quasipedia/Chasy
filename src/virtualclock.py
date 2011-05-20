@@ -35,8 +35,8 @@ class VirtualClock(unicode):
         cls.font_face = "Courier New"
         cls.min_pixel_dimension = 400
         cls.max_pixel_dimension = 400
-        cls.charspace = 100
-        cls.borderspace = 100
+        cls.charspace = 1.0
+        cls.borderspace = 1.0
         cls.bkg_color = gtk.gdk.Color("#000")
         cls.unlit_color = gtk.gdk.Color("#888")
         cls.lit_color = gtk.gdk.Color("#FFF")
@@ -134,30 +134,35 @@ class VirtualClock(unicode):
         '''
         gtk_to_rgb = lambda x : [c/65535.0 for c in (x.red, x.green, x.blue)]
         cr = surface
-        # Surface normalisation (everything is between 0 and 1)
+        # NORMALISATION
         cr.scale(self.size_x, self.size_y)
-        # Draw background
+        # EM [one char size, in percentage of normalised surface]
+        ems_in_matrix_unit = 1.0+self.charspace
+        ems_in_border = self.borderspace
+        em_x = 1/(ems_in_border*2+ems_in_matrix_unit*(self.cols-1)+1)
+        em_y = 1/(ems_in_border*2+ems_in_matrix_unit*(self.rows-1)+1)
+        # BACKGROUND
         cr.save()
         cr.set_source_rgb(*gtk_to_rgb(self.bkg_color))
         cr.rectangle(0, 0, 1, 1)
         cr.fill()
         cr.restore()
-        # Surface matrix-isation: 1.0 is the space for a letter
-        cr.scale(1.0/self.cols, 1.0/self.rows)
-        # Fontface selection
+        # FONT SETTINGS
         cr.select_font_face(self.font_face, cairo.FONT_SLANT_NORMAL,
                             cairo.FONT_WEIGHT_BOLD)
         cr.set_source_rgb(*gtk_to_rgb(self.unlit_color))
-        # The size must be chose in relationship with the spacing
-        em = 1 + self.charspace/100.0
-        cr.set_font_size(2.0/em)
+        # LETTER OUTPUT
+        cr.scale(em_x, em_y)  #normalisation to em = 1.0
+        cr.set_font_size(1.0)
         fascent, fdescent, fheight, fxadvance, fyadvance = cr.font_extents()
         cx, cy = 0, 0
+        cr.translate(ems_in_border, ems_in_border)
         for letter in self:
             xbearing, ybearing, width, height, xadvance, yadvance = \
                                                     cr.text_extents(letter)
-            cr.move_to(cx + 0.5 - xbearing - width / 2,
-                       cy + 0.5 - fdescent + fheight / 2)
+            print(em_x, em_y, xbearing, width, fdescent, fheight)
+            cr.move_to(cx*ems_in_matrix_unit + 0.5 - xbearing - width / 2,
+                       cy*ems_in_matrix_unit + 0.5 - fdescent + fheight / 2)
             cr.show_text(letter)
             if cx == self.cols-1:
                 cy += 1
