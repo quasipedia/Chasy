@@ -42,7 +42,8 @@ class Element(object):
         for i, el in enumerate(self.sequence):
             if el == self:
                 return i
-        raise BaseException('Element is not part of the sequence')
+        raise BaseException('Element \'%s\' is not part of the sequence'
+                            % self.word)
 
     def get_word_length(self, strip=None):
         '''

@@ -1058,7 +1058,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
               <object class="GtkTable" id="table2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="n_rows">8</property>
+                <property name="n_rows">9</property>
                 <property name="n_columns">2</property>
                 <property name="column_spacing">5</property>
                 <property name="homogeneous">True</property>
@@ -1209,6 +1209,8 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
                     <property name="use_action_appearance">False</property>
+                    <property name="font_name">Courier New 10</property>
+                    <property name="show_style">False</property>
                     <property name="show_size">False</property>
                     <signal name="font-set" handler="on_vwc_font_button_font_set" swapped="no"/>
                   </object>
@@ -1347,6 +1349,64 @@ Phrases are NOT preceded by the HH:MM string.</property>
                     <property name="top_attach">7</property>
                     <property name="bottom_attach">8</property>
                     <property name="y_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label19">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="xalign">0</property>
+                    <property name="ypad">5</property>
+                    <property name="label" translatable="yes">Styles:</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">8</property>
+                    <property name="bottom_attach">9</property>
+                    <property name="y_options"></property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkVBox" id="vbox6">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkCheckButton" id="vwc_bold">
+                        <property name="label" translatable="yes">bold</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_vwc_bold_toggled" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="vwc_italic">
+                        <property name="label" translatable="yes">italic</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_vwc_italic_toggled" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">8</property>
+                    <property name="bottom_attach">9</property>
                   </packing>
                 </child>
               </object>

@@ -39,6 +39,8 @@ class VirtualClock(unicode):
         cls.charspace = 1.0
         cls.borderspace = 1.0
         cls.case = None
+        cls.italic = False
+        cls.bold = False
         cls.bkg_color = gtk.gdk.Color("#000")
         cls.unlit_color = gtk.gdk.Color("#888")
         cls.lit_color = gtk.gdk.Color("#FFF")
@@ -117,7 +119,6 @@ class VirtualClock(unicode):
         '''
         for k in kwargs:
             setattr(self, k, kwargs[k])
-            print(k, kwargs[k])
         self.__font_face_stripping()
         self.scaling = float(self.max_pixel_dimension)/max(self.cols,
                                                            self.rows)
@@ -150,8 +151,11 @@ class VirtualClock(unicode):
         cr.fill()
         cr.restore()
         # FONT SETTINGS
-        cr.select_font_face(self.font_face, cairo.FONT_SLANT_NORMAL,
-                            cairo.FONT_WEIGHT_BOLD)
+        slant = cairo.FONT_SLANT_ITALIC if \
+                            self.italic else cairo.FONT_SLANT_NORMAL
+        weight = cairo.FONT_WEIGHT_BOLD if \
+                            self.bold else cairo.FONT_WEIGHT_NORMAL
+        cr.select_font_face(self.font_face, slant, weight)
         cr.set_source_rgb(*gtk_to_rgb(self.unlit_color))
         # LETTER OUTPUT
         cr.scale(em_x, em_y)  #normalisation to em = 1.0
@@ -189,9 +193,16 @@ class VirtualClock(unicode):
         self.draw(cairo.Context(surface))
         surface.finish()
         to_perc = lambda x : str(int(round(x*100)))
-        new_name = '_'.join((self.font_face, str(self.case),
+        new_name = '_'.join((self.font_face,
                              to_perc(self.charspace),
-                             to_perc(self.borderspace))) + '.' + format
+                             to_perc(self.borderspace)))
+        if self.italic:
+            new_name += '_italic'
+        if self.bold:
+            new_name += '_bold'
+        if self.case:
+            new_name += '_' + self.case
+        new_name += '.' + format
         os.rename(fname, new_name)
 
 def run_as_script():

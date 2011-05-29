@@ -519,22 +519,24 @@ class Logic(object):
         project = dict()
         project['clock_module'] = self.clock.__module_name__
         project['supersequence'] = None if not self.supersequence else\
-                                   self.supersequence.get_sequence_as_string()
-        file_ = open('../data/saved.txt', 'w')
-        pickle.dump(project, file_)
+                                   self.supersequence
+        file_ = open('../data/saved.sav', 'w')
+        # Protocol 0 (default one *will* generate problems with cyclic
+        # reference of sequence and elements.
+        pickle.dump(project, file_, pickle.HIGHEST_PROTOCOL)
         file_.close()
 
     def load_project(self):
         '''
         Load a project from disk and regenerate the environment to match it.
         '''
-        file_ = open('../data/saved.txt', 'r')
+        file_ = open('../data/saved.sav', 'r')
         project = pickle.load(file_)
         file_.close()
         self.clock = self.available_modules[project['clock_module']].Clock()
         self.swap_clock_callback()
-        self.supersequence = supseq.SuperSequence(project['supersequence'],
-                                             self.clock.get_phrases_dump())
+        if project['supersequence'] != None:
+            self.supersequence = project['supersequence']
 
     def generate_vclock(self, drawing_area):
         '''

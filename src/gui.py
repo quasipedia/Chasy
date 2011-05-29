@@ -346,6 +346,14 @@ class Gui(object):
         self.logic.vclock.refresh_params(case=value)
         self.logic.vclock.update()
 
+    def on_vwc_italic_toggled(self, widget, data=None):
+        self.logic.vclock.refresh_params(italic=widget.get_active())
+        self.logic.vclock.update()
+
+    def on_vwc_bold_toggled(self, widget, data=None):
+        self.logic.vclock.refresh_params(bold=widget.get_active())
+        self.logic.vclock.update()
+
     def on_custom_phrase_combo_changed(self, widget, data=None):
         print('customphrase lit', data)
         self.logic.vclock.update()
