@@ -33,6 +33,7 @@ class Element(object):
         # Cache of elements that can block shifting in either direction
         self.blocked_by = {'left':[], 'right':[]}
         self.tile = None  # this is just a reminder, see ClockFace!
+        self.led_strings = None
 
     def get_position(self):
         '''
@@ -493,6 +494,62 @@ class SuperSequence(list):
         # If one has ran out of elements but hasn't find a solution,
         # return the element that filled the space better
         return closest
+
+    def set_led_strings(self):
+        '''
+        Assign to each element of the sequence the right led string number
+        '''
+        # TODO: This will need deep changes for substring optimisation
+        max_led_number = 7  #TODO: put this in an interactive menu
+        string_counter = 0
+        for el in self:
+            el.led_strings = []
+            l = el.get_word_length('both')
+            for s in range(l//max_led_number + 1):
+                el.led_strings.append(string_counter)
+                string_counter += 1
+        self.number_of_led_strings = string_counter
+
+        # Output a human-readable mapping of words to led strings
+        text = 'LED STRING MAPPING\n'
+        text += '==================\n'
+        for el in self:
+            row = []
+            row.append(el.word.strip().ljust(15))
+            for s in el.led_strings:
+                row.append(str(s).zfill(3))
+            text += ' '.join(row)
+            text += '\n'
+        text += '\n'
+
+        text += 'ASM CODE\n'
+        text += '========\n'
+        bytes_number = self.number_of_led_strings // 8 + 1
+        for phrase in self.sanity_pool:
+            text += ';; %s\n' % phrase  # Phrase as ASM comment
+            # Raw bitmask
+            bits = ''
+            cursor = 0
+            for phrase_word in phrase.split():
+                for el in self[cursor:]:
+                    strings_number = len(el.led_strings)
+                    cursor += 1
+                    cface_word = el.word.strip()
+                    if phrase_word == cface_word:
+                        bits += '1' * strings_number
+                        break
+                    else:
+                        bits += '0' * strings_number
+            bits = bits.ljust(bytes_number*8, '0')
+            # ASM-Formatted bitmask
+            bits = list(bits)
+            bytes = ['.byte ' + ''.join(bits[i*8:i*8+8]) \
+                     for i in range(bytes_number)]
+            text += '\n'.join(bytes) + '\n'
+
+        return text
+
+
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

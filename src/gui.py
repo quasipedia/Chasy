@@ -275,6 +275,11 @@ class Gui(object):
         self.vclock_window.show()
         self.logic.vclock.update()
 
+    def on_cfe_generate_code_clicked(self, widget, data=None):
+        text = self.logic.supersequence.set_led_strings()
+        self.__write_in_dump(text)
+        self.dump_window.show()
+
     def update_clockface_stats(self, widget, data):
         '''
         React to any change in the clockface image.
