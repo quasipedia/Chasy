@@ -12,6 +12,7 @@ storage, modification, testing, etc...
 '''
 
 import copy
+import math
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -505,7 +506,7 @@ class SuperSequence(list):
         for el in self:
             el.led_strings = []
             l = el.get_word_length('both')
-            for s in range(l//max_led_number + 1):
+            for s in range(int(math.ceil(l*1.0/max_led_number))):
                 el.led_strings.append(string_counter)
                 string_counter += 1
         self.number_of_led_strings = string_counter
@@ -524,28 +525,46 @@ class SuperSequence(list):
 
         text += 'ASM CODE\n'
         text += '========\n'
-        bytes_number = self.number_of_led_strings // 8 + 1
+        byte_counter = 0
         for phrase in self.sanity_pool:
             text += ';; %s\n' % phrase  # Phrase as ASM comment
-            # Raw bitmask
-            bits = ''
+            strings = []
             cursor = 0
             for phrase_word in phrase.split():
                 for el in self[cursor:]:
-                    strings_number = len(el.led_strings)
                     cursor += 1
                     cface_word = el.word.strip()
                     if phrase_word == cface_word:
-                        bits += '1' * strings_number
+                        for s in el.led_strings:
+                            strings.append(s)
+                            byte_counter += 1
                         break
-                    else:
-                        bits += '0' * strings_number
-            bits = bits.ljust(bytes_number*8, '0')
-            # ASM-Formatted bitmask
-            bits = list(bits)
-            bytes = ['.byte ' + ''.join(bits[i*8:i*8+8]) \
-                     for i in range(bytes_number)]
-            text += '\n'.join(bytes) + '\n'
+            for string in strings:
+                text += '.byte %s\n' % str(string).zfill(3)
+        text += '\nRequired bytes for complete mapping: %d' % byte_counter
+########### OLD BITMASK CODE ####################
+#        bytes_number = self.number_of_led_strings // 8 + 1
+#        for phrase in self.sanity_pool:
+#            text += ';; %s\n' % phrase  # Phrase as ASM comment
+#            # Raw bitmask
+#            bits = ''
+#            cursor = 0
+#            for phrase_word in phrase.split():
+#                for el in self[cursor:]:
+#                    strings_number = len(el.led_strings)
+#                    cursor += 1
+#                    cface_word = el.word.strip()
+#                    if phrase_word == cface_word:
+#                        bits += '1' * strings_number
+#                        break
+#                    else:
+#                        bits += '0' * strings_number
+#            bits = bits.ljust(bytes_number*8, '0')
+#            # ASM-Formatted bitmask
+#            bits = list(bits)
+#            bytes = ['.byte ' + ''.join(bits[i*8:i*8+8]) \
+#                     for i in range(bytes_number)]
+#            text += '\n'.join(bytes) + '\n'
 
         return text
 
