@@ -509,6 +509,10 @@ class SuperSequence(list):
             for s in range(int(math.ceil(l*1.0/max_led_number))):
                 el.led_strings.append(string_counter)
                 string_counter += 1
+                # TODO: This hardcoded way of using only 15 channels per TLC
+                # should be automatised to maximise energy dissipation spread
+                if (string_counter + 1) % 16 == 0:
+                    string_counter += 1
         self.number_of_led_strings = string_counter
 
         # Output a human-readable mapping of words to led strings
@@ -523,11 +527,75 @@ class SuperSequence(list):
             text += '\n'
         text += '\n'
 
-        text += 'ASM CODE\n'
+        # Output the noisiest combination of strings for each TLC.
+        # NOISIEST = highest dissipation within TLC specifications at
+        # 50% duty cycle.
+        text += 'NOISIEST COMBOS\n'
+        text += '===============\n'
+        # Groups strings by chip, storing length
+        chips_image = {}
+        for el in self:
+            for s in el.led_strings:
+                chip_number = (s+1)/16
+                tmp = el.get_word_length(strip='both')
+                leds_in_string =  tmp/len(el.led_strings)  #approximate!
+                try:
+                    chips_image[chip_number].append((s, leds_in_string))
+                except KeyError:
+                    chips_image[chip_number] = [(s, leds_in_string)]
+        # Calculating dissipations
+        LED_INPUT_V = 24.0  #volts
+        LED_DROP_V = 3.25  #volts
+        CURRENT = 0.021  #amperes
+        BASE_DISSIPATION = 0.060  #watts
+        MAX_CHIP_DISSIPATION = 1.053  #watts
+        DOT_CORRECTION = 63/63.0
+        MAX_GS_VALUE = 4095
+        DUTY_CYCLE = MAX_GS_VALUE/float(MAX_GS_VALUE)
+        max_ch_dissipation = lambda leds : (LED_INPUT_V - leds * LED_DROP_V) \
+                                            * CURRENT * DOT_CORRECTION \
+                                            * DUTY_CYCLE
+        # Calculate the sum of max channel dissipations for each chip
+        chip_max_dissipations = [sum([max_ch_dissipation(leds) for \
+                                 ch, leds in values]) for \
+                                 values in chips_image.values()]
+        # Calculate the max possible GS scale value for each chip.
+        get_gs = lambda diss : int(round(MAX_GS_VALUE*(MAX_CHIP_DISSIPATION\
+                                                       -BASE_DISSIPATION)\
+                                                       /diss))
+        chip_max_GS = [get_gs(diss) for diss in chip_max_dissipations]
+        text += str(chip_max_GS) + '\n'
+        text += '\n'
+
+
+#        text += 'ASM CODE\n'
+#        text += '========\n'
+#        byte_counter = 0
+#        for phrase in self.sanity_pool:
+#            text += ';; %s\n' % phrase  # Phrase as ASM comment
+#            strings = []
+#            cursor = 0
+#            for phrase_word in phrase.split():
+#                for el in self[cursor:]:
+#                    cursor += 1
+#                    cface_word = el.word.strip()
+#                    if phrase_word == cface_word:
+#                        for s in el.led_strings:
+#                            strings.append(s)
+#                            byte_counter += 1
+#                        break
+#            # Add stop-bit information to the last string
+#            strings[-1] |= 0b10000000
+#            for string in strings:
+#                text += '.byte %s\n' % str(string).zfill(3)
+#        text += '\nRequired bytes for complete mapping: %d' % byte_counter
+
+        text += 'C CODE\n'
         text += '========\n'
+        text += 'unsigned char clockTable[] PROGMEM {\n'
         byte_counter = 0
         for phrase in self.sanity_pool:
-            text += ';; %s\n' % phrase  # Phrase as ASM comment
+            text += '    // %s\n' % phrase  # Phrase as ASM comment
             strings = []
             cursor = 0
             for phrase_word in phrase.split():
@@ -539,8 +607,11 @@ class SuperSequence(list):
                             strings.append(s)
                             byte_counter += 1
                         break
-            for string in strings:
-                text += '.byte %s\n' % str(string).zfill(3)
+            # Add stop-bit information to the last string
+            strings[-1] |= 0b10000000
+#            text += '    %s,\n' % ', '.join([str(s).zfill(3) for s in strings])
+            text += '    %s,\n' % ', '.join([str(hex(s)) for s in strings])
+        text += '}\n'
         text += '\nRequired bytes for complete mapping: %d' % byte_counter
 ########### OLD BITMASK CODE ####################
 #        bytes_number = self.number_of_led_strings // 8 + 1
