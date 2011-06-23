@@ -1573,6 +1573,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                   <object class="GtkComboBox" id="sttng_module_lang_combo">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <signal name="changed" handler="on_sttng_module_lang_combo_changed" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">True</property>

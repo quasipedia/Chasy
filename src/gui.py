@@ -8,6 +8,7 @@ import gtk
 import gobject
 import pango
 import logic
+import clockmanager
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -84,6 +85,7 @@ class Gui(object):
         self.modlang_combo = self.builder.get_object("sttng_module_lang_combo")
         self.modname_combo = self.builder.get_object("sttng_module_name_combo")
         self.accuracy_combo = self.builder.get_object("sttng_accuracy_combo")
+        self.clock_manager = clockmanager.ClockManager()
         self.__populate_settings()
 
         # INIT VALUES AND STATUS!
@@ -113,11 +115,26 @@ class Gui(object):
             liststore.append([unicode(i)])
         combo.set_model(liststore)
         cell = gtk.CellRendererText()
+        combo.clear()  #Needed if the combo was already populated
         combo.pack_start(cell, True)
         combo.add_attribute(cell, 'text', 0)
         if select != None:
             assert select < len(entries)
             combo.set_active(select)
+
+    def __populate_clock_modules_combo(self):
+        '''
+        Populate the clock modules combo box.
+        This is a separate method as this population is done according to a
+        filter that can change, so it needs to be performed not only at
+        initialisation time.
+        '''
+        index = self.modlang_combo.get_active()
+        lang = None if index == -1 else self.clock_languages_entries[index]
+        self.clock_modules_entries = self.clock_manager.get_module_names(lang)
+        print(lang, self.clock_modules_entries)
+        self.__populate_combo(self.modname_combo,
+                              self.clock_modules_entries, 0)
 
     def __populate_settings(self):
         '''
@@ -126,6 +143,12 @@ class Gui(object):
         # Clock accuracy
         entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
         self.__populate_combo(self.accuracy_combo, entries, 0)
+        # Clock languages
+        self.clock_languages_entries = self.clock_manager.get_all_languages()
+        self.__populate_combo(self.modlang_combo,
+                              self.clock_languages_entries)
+        # Clock modules
+        self.__populate_clock_modules_combo()
 
     def __write_in_dump(self, what, how='ubuntu'):
         '''
@@ -420,6 +443,11 @@ class Gui(object):
 
     def on_save_screenshot_button_clicked(self, widget, data=None):
         self.logic.vclock.get_shot('svg')
+
+    ##### PROJECT SETTINGS #####
+
+    def on_sttng_module_lang_combo_changed(self, widget, data=None):
+        self.__populate_clock_modules_combo()
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

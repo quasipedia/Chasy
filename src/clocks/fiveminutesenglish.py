@@ -15,14 +15,15 @@ __status__ = "Stable"
 
 
 class Clock(baseclock.Clock):
-    
+
     '''
     English clock with five-minutes precision
     '''
-    
+
     __module_name__ = 'English 5 minute resolution'
+    __language__ = 'English'
     __authors__ = 'Mac Ryan'
-    
+
     def __init__(self):
         '''
         Constructor
@@ -81,8 +82,8 @@ class Clock(baseclock.Clock):
         if minutes == 0:
             words.append("o'clock")
         return ' '.join(words)
-    
-    
+
+
 def run_as_script():
     '''Run this code if the file is executed as script.'''
     print('Module executed as script!')

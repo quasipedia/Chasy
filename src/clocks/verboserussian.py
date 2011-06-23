@@ -3,9 +3,9 @@
 '''
 Clock plugin providing verbose sentences in Russian.
 
-The emphasis of this clock is on having long sentences and a variety of 
+The emphasis of this clock is on having long sentences and a variety of
 expressions (e.g.: "midnight" or "noon" instead of "twelve"). Sentences
-are maybe redundant in their formulation but are correct. 
+are maybe redundant in their formulation but are correct.
 '''
 
 import baseclock
@@ -20,14 +20,15 @@ __status__ = "Stable"
 
 
 class Clock(baseclock.Clock):
-    
+
     '''
     Russian verbose clock.
     '''
-    
+
     __module_name__ = 'Verbose Russian'
+    __language__ = 'Russian'
     __authors__ = 'Mac Ryan, '
-    
+
     def __init__(self):
         self.word_it_is = 'Сейчас'
         self.word_to = 'без'
@@ -121,7 +122,7 @@ class Clock(baseclock.Clock):
         This method is the only method to make a module for Chasy.
         '''
         output = [self.word_it_is]
-                
+
         # O'CLOCK CASE
         if minutes == 0:
             if hours == 12:
@@ -133,13 +134,13 @@ class Clock(baseclock.Clock):
                 output.append(self.cardinals_for_hours[hours%12])
                 output.append(self._word_select(hours%12, self.words_hour))
                 output.append(self._word_select(hours, self.words_day_parts))
-        
+
         # <30 MINUTES TO FULL HOUR
         elif minutes > 30:
             output.append(self.word_to)
-            # ADD PROPER NUMBER - looks convoluted, but it is so because 
-            # it has been written thinking to the actual physical clock 
-            # and the need to recycle the word "one, two, three..." for 
+            # ADD PROPER NUMBER - looks convoluted, but it is so because
+            # it has been written thinking to the actual physical clock
+            # and the need to recycle the word "one, two, three..." for
             # "twenty-one", "twenty-two", "twenty-three", etc...
             minutes_to = 60-minutes
             if minutes_to == 15:
@@ -153,24 +154,24 @@ class Clock(baseclock.Clock):
                     output.append(self.cardinals_genitive[minutes_to])
                 # ADD WORD 'MINUTES'
                 if minutes_to == 1 or minutes_to == 21:
-                    output.append(self._word_select('gen_1', 
+                    output.append(self._word_select('gen_1',
                                                     self.words_minutes))
                 else:
-                    output.append(self._word_select('gen_not_1', 
+                    output.append(self._word_select('gen_not_1',
                                                     self.words_minutes))
             # ADD THE HOUR THAT WILL COME
             if hours%12+1 == 1:
-                output.append(self._word_select('to_one_hour', 
+                output.append(self._word_select('to_one_hour',
                                                 self.words_hour))
             else:
                 output.append(self.cardinals_for_hours[hours%12+1])
             # ONLY FOR 2, 3, 4 PM and 3 AM ADD WORD "часа"
             if hours+1 in (14, 15, 16, 3):
-                output.append(self._word_select('to_two/three/four_hour', 
+                output.append(self._word_select('to_two/three/four_hour',
                                                 self.words_hour))
             # APPEND DAY PERIOD
             output.append(self._word_select(hours+1, self.words_day_parts))
-        
+
         # MAX 30 MINUTES AFTER FULL HOUR
         elif minutes <= 30:
             if minutes == 15:
@@ -191,14 +192,14 @@ class Clock(baseclock.Clock):
                 output.append(self._word_select(hours, self.words_day_parts))
             else:
                 output.append(self._word_select(hours+1, self.words_day_parts))
-        
+
         # EXCEPTION
         else:
-            raise(Exception, ' '.join(('Unrecognised time --- ', 
+            raise(Exception, ' '.join(('Unrecognised time --- ',
                                        str(hours), ':', str(minutes))))
         return ' '.join(output)
-    
-    
+
+
 def run_as_script():
     '''Run this code if the file is executed as script.'''
     print('Module executed as script!')

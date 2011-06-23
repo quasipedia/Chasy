@@ -4,8 +4,6 @@
 Core logic for the Chasy program.
 '''
 
-import glob
-import sys
 import textwrap
 import gtk
 import itertools
@@ -78,17 +76,6 @@ class Logic(object):
             return
         self.swap_clock_callback = swap_clock_callback
         self.cface_modified_callback = cface_modified_callback
-        # Imports all available clock modules and organise a human-readable
-        # list of them in the form {'human_name':imported_module_object}
-        self.available_modules = {}
-        for module_name in glob.glob("clocks/*.py"):
-            module_name = module_name[7:-3]
-            if module_name != '__init__':
-                module_name = 'clocks.' + module_name
-                __import__(module_name)
-                imported = sys.modules[module_name]
-                human_name = getattr(imported, 'Clock').__module_name__
-                self.available_modules[human_name] = imported
 
     def _get_min_avg_max(self, string_series, what, return_as_text=True):
         '''
