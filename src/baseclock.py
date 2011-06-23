@@ -27,18 +27,18 @@ class Clock(object):
         for keys, value in choices.iteritems():
             if key in keys:
                 return value
-        raise Exception("Key out of range: " + str(key))    
-    
+        raise Exception("Key out of range: " + str(key))
+
     def get_time_phrase(self, hours, minutes):
         '''
         Placeholder method that should ALWAYS be overridden by clock modules.
         '''
         return 'ERROR: No module installed'
-        
+
     def get_phrases_dump(self, with_numbers=False):
         '''
         Generate the dump of all the time phrases in a day (1440 for a minute-
-        accurate clock). If 'with_numbers' is True, prepend a numeric 
+        accurate clock). If 'with_numbers' is True, prepend a numeric
         representation of the time in the form HH:MM.
         '''
         phrases = []
@@ -49,7 +49,7 @@ class Clock(object):
                     phrase += str(h).zfill(2) + ':' + str(m).zfill(2) + '  '
                 phrases.append(phrase + self.get_time_phrase(h, m))
         return phrases
-    
+
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

@@ -8,7 +8,6 @@ import gtk
 import gobject
 import pango
 import logic
-import clockmanager
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -25,8 +24,10 @@ class Gui(object):
     '''
 
     def __init__(self):
-        self.gui_file = "../data/gui.xml"
+        self.logic = logic.Logic(self.clock_change,
+                                 self.update_clockface_stats)
 
+        self.gui_file = "../data/gui.xml"
         self.builder = gtk.Builder()
         self.builder.add_from_file(self.gui_file)
         self.builder.connect_signals(self)
@@ -39,10 +40,9 @@ class Gui(object):
         self.hours_box = self.builder.get_object("hours")
         self.minutes_box = self.builder.get_object("minutes")
         self.menubar = self.builder.get_object("menu_bar")
-        self.menu_help = self.builder.get_object("help")
-        self.menu_file = self.builder.get_object("file")
-        self.menu_file_new = self.builder.get_object("file_new")
-        self.menu_file_open = self.builder.get_object("file_open")
+        # Menu items that can be sensitive even without a project
+        self.safe_menuitems = ['file_new', 'file_open', 'file_quit',
+                               'help_about']
 
         # PROJECT SETTINGS WINDOW
         self.settings_window = self.builder.get_object("settings_window")
@@ -83,6 +83,7 @@ class Gui(object):
 
         # VIRTUAL WORDCLOCK
         self.vclock_cface = self.builder.get_object("vclock_drawing")
+        self.vclock_settings = self.builder.get_object("vclock_settings")
         self.vclock_uppercase = self.builder.get_object("vwc_enoforce_upper")
         self.vclock_lowercase = self.builder.get_object("vwc_enoforce_lower")
 
@@ -94,33 +95,47 @@ class Gui(object):
             self.builder.get_object("module_description_tv")
         self.mod_textbuffer = \
             self.builder.get_object("module_description_buffer")
-        self.clock_manager = clockmanager.ClockManager()
         self.__populate_settings()
 
         # INIT VALUES AND STATUS!
         self.hours = 0
         self.minutes = 0
         self.keep_sync = False
+        self.__set_safe_mode(True)
 
-        # Hinibit the main window interactive elements apart from the
-        # "file>new" and "file>open" and "help" entries in the menu. Hide
-        # the area with the UI for the virtual clock settings.
-        self.sync_checkbox.set_sensitive(False)
-        self.hours_box.set_sensitive(False)
-        self.minutes_box.set_sensitive(False)
+        self.main_window.show()
+
+
+    ###### HELPER METHODS #####
+
+    def __set_safe_mode(self, safestate):
+        '''
+        The 'safe mode' is the mode in which the program runs without an
+        open project (for example at startup or if a project has been closed).
+        This helper method deactivate all menu entries and other UI elements
+        that are project-related.
+        safestate == True → safe mode ON
+        safestate == False → safe mode OFF.
+        '''
+        assert safestate in (True, False)
+        # Toggling conditions
+        self.sync_checkbox.set_sensitive(not safestate)
+        self.hours_box.set_sensitive(not safestate)
+        self.minutes_box.set_sensitive(not safestate)
         for elem in self.menubar.get_children():
-            if elem == self.menu_file:
-                for item in elem.get_submenu().get_children():
-                    if item not in (self.menu_file_new, self.menu_file_open):
-                        item.set_sensitive(False)
-            elif elem != self.menu_help:
-                elem.set_sensitive(False)
-#        self.logic = logic.Logic(self.modules_menu, self.clock_change,
-#                                 self.update_clockface_stats)
-#        self.update_text()
-        self.main_window.show_all()
-
-    ###### HELPER FUNCTIONS #####
+            for item in elem.get_submenu().get_children():
+                item.set_sensitive(not safestate)
+        # State-specific conditions
+        if safestate:
+            for menuitem_name in self.safe_menuitems:
+                menuitem = self.builder.get_object(menuitem_name)
+                menuitem.set_sensitive(True)
+            self.vclock_cface.hide()
+            self.vclock_settings.hide()
+            self.update_text(reset=True)
+        else:
+            self.vclock_cface.show()
+            self.vclock_settings.show()
 
     def __populate_combo(self, combo, entries, select=None):
         '''
@@ -149,7 +164,8 @@ class Gui(object):
         index = self.modlang_combo.get_active()
         # first entry is in language box is '---' which is "no filter"
         lang = None if index == 0 else self.clock_languages_entries[index]
-        self.clock_modules_entries = self.clock_manager.get_module_names(lang)
+        cm = self.logic.clock_manager
+        self.clock_modules_entries = cm.get_all_module_names(lang)
         self.__populate_combo(self.modname_combo,
                               self.clock_modules_entries, 0)
 
@@ -161,7 +177,8 @@ class Gui(object):
         entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
         self.__populate_combo(self.accuracy_combo, entries, 0)
         # Clock languages
-        self.clock_languages_entries = self.clock_manager.get_all_languages()
+        cm = self.logic.clock_manager
+        self.clock_languages_entries = cm.get_all_languages()
         self.clock_languages_entries.insert(0, '*all*')
         self.__populate_combo(self.modlang_combo,
                               self.clock_languages_entries, 0)
@@ -257,8 +274,14 @@ class Gui(object):
         self.minutes = int(widget.get_text())
         self.update_text()
 
-    def update_text(self):
-        phrase = self.logic.clock.get_time_phrase(self.hours, self.minutes)
+    def update_text(self, reset=False):
+        '''
+        Update the time phrase of the main window.
+        '''
+        if not reset:
+            phrase = self.logic.clock.get_time_phrase(self.hours, self.minutes)
+        else:
+            phrase = 'Chasy'
         self.output_text.set_text(phrase)
 
     ##### MAIN MENU #####
@@ -467,7 +490,8 @@ class Gui(object):
 
     def on_sttng_module_name_combo_changed(self, widget, data=None):
         module = self.clock_modules_entries[widget.get_active()]
-        description = self.clock_manager.get_module_description(module)
+        cm = self.logic.clock_manager
+        description = cm.get_module_description(module)
         self.mod_textbuffer.set_text(description)
 
 def run_as_script():

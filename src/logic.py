@@ -11,6 +11,7 @@ import difflib
 import math
 import time
 import datetime
+import clockmanager
 import supseq
 import clockface
 import pickle
@@ -67,8 +68,9 @@ class Logic(object):
     specific functionality, which is given by individual clock modules.
     '''
 
-    def __init__(self, parent_menu, swap_clock_callback,
-                 cface_modified_callback, debug=False):
+    def __init__(self, swap_clock_callback, cface_modified_callback,
+                 debug=False):
+        self.clock_manager = clockmanager.ClockManager()
         # The program hasn't run a supersequence heuristic just yet...
         self.supersequence = None
         # The debug mode of using the class is command-line only...
@@ -514,7 +516,8 @@ class Logic(object):
         file_ = open('../data/saved.sav', 'r')
         project = pickle.load(file_)
         file_.close()
-        self.clock = self.available_modules[project['clock_module']].Clock()
+        cm = self.clock_manager
+        self.clock = cm.get_clock_instance(project['clock_module'])
         self.swap_clock_callback()
         if project['supersequence'] != None:
             self.supersequence = project['supersequence']
