@@ -20,9 +20,11 @@ class Clock(baseclock.Clock):
     Plain English clock.
     '''
 
-    __module_name__ = 'Standard English'
+    __module_name__ = 'Standard English 12h'
     __language__ = 'English'
     __authors__ = 'Mac Ryan'
+    __description__ = '''Plain twelve hours based English clock. Sentences
+    repeat every 12 hours (there are no 'am' or 'pm').'''
 
     def __init__(self):
         '''

@@ -23,6 +23,7 @@ class Clock(baseclock.Clock):
     __module_name__ = 'English 5 minute resolution'
     __language__ = 'English'
     __authors__ = 'Mac Ryan'
+    __description__ = 'Temporary module.'
 
     def __init__(self):
         '''

@@ -66,6 +66,12 @@ class ClockManager(object):
         tmp = lambda n : self._get_module_specialstring(n, 'language')
         return [name for name in self.modules if tmp(name) == language]
 
+    def get_module_description(self, module):
+        '''
+        Return the description of the module as given by its author.
+        '''
+        raw = self._get_module_specialstring(module, 'description')
+        return ' '.join(raw.split())
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

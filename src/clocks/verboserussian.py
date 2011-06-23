@@ -27,7 +27,12 @@ class Clock(baseclock.Clock):
 
     __module_name__ = 'Verbose Russian'
     __language__ = 'Russian'
-    __authors__ = 'Mac Ryan, '
+    __authors__ = 'Mac Ryan, Olga Andronova'
+    __description__ = '''This is an extremely verbose Russian clock. It uses
+    expressions such "midnight", "noon" and specifies if the time is in the
+    morning, day, afternoon or night. As a result each of the 1440 minutes
+    in a day has its unique sentence. Trivia: this is the module that started
+    the entire project Chasy.'''
 
     def __init__(self):
         self.word_it_is = 'Сейчас'
