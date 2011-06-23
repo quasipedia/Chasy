@@ -698,7 +698,6 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
     <property name="page_increment">10</property>
   </object>
   <object class="GtkWindow" id="main_window">
-    <property name="width_request">600</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Chasy - the wordclock designer</property>
     <property name="window_position">center</property>
@@ -920,6 +919,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
           <object class="GtkLabel" id="output_text">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="xpad">15</property>
             <property name="ypad">8</property>
             <property name="label" translatable="yes">Chasy</property>
             <attributes>
@@ -934,6 +934,23 @@ Phrases are NOT preceded by the HH:MM string.</property>
           </packing>
         </child>
         <child>
+          <object class="GtkCheckButton" id="keep_in_sync">
+            <property name="label" translatable="yes">Display current time</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">False</property>
+            <property name="border_width">11</property>
+            <property name="use_action_appearance">False</property>
+            <property name="draw_indicator">True</property>
+            <signal name="toggled" handler="on_keep_in_sync_toggled" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkHBox" id="hbox1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -942,8 +959,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
               <object class="GtkLabel" id="hours_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes"> Hours
-(0-23)</property>
+                <property name="label" translatable="yes"> Hours</property>
                 <attributes>
                   <attribute name="weight" value="ultraheavy"/>
                 </attributes>
@@ -959,6 +975,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">•</property>
+                <property name="xalign">0.5</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="primary_icon_sensitive">True</property>
@@ -970,7 +987,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
               </object>
               <packing>
                 <property name="expand">True</property>
-                <property name="fill">True</property>
+                <property name="fill">False</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -978,8 +995,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
               <object class="GtkLabel" id="minutes_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Minutes
-   (0-59)</property>
+                <property name="label" translatable="yes">Minutes</property>
                 <attributes>
                   <attribute name="weight" value="ultraheavy"/>
                 </attributes>
@@ -995,6 +1011,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">•</property>
+                <property name="xalign">0.5</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>
                 <property name="primary_icon_sensitive">True</property>
@@ -1006,16 +1023,27 @@ Phrases are NOT preceded by the HH:MM string.</property>
               </object>
               <packing>
                 <property name="expand">True</property>
-                <property name="fill">True</property>
+                <property name="fill">False</property>
                 <property name="position">3</property>
               </packing>
             </child>
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkDrawingArea" id="vclock_drawing">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <signal name="expose-event" handler="on_vclock_drawing_expose_event" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="padding">5</property>
-            <property name="position">2</property>
+            <property name="position">4</property>
           </packing>
         </child>
         <child>
@@ -1028,7 +1056,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">3</property>
+            <property name="position">5</property>
           </packing>
         </child>
       </object>
@@ -1384,16 +1412,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
               </packing>
             </child>
             <child>
-              <object class="GtkDrawingArea" id="vclock_drawing">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <signal name="expose-event" handler="on_vclock_drawing_expose_event" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>

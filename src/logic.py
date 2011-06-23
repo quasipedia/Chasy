@@ -12,6 +12,7 @@ import itertools
 import difflib
 import math
 import time
+import datetime
 import supseq
 import clockface
 import pickle
@@ -295,6 +296,13 @@ class Logic(object):
         The items are inherently sorted.
         '''
         return [i for i, el in enumerate(list_) if el == item]
+
+    def get_current_time(self):
+        '''
+        Return a tuple in the form (hours, minutes) using system clock.
+        '''
+        now = datetime.datetime.now()
+        return (now.hour, now.minute)
 
     def switch_clock(self, widget, clock_name):
         '''

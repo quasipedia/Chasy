@@ -5,6 +5,7 @@ Chasy's Graphic User Interface and callbacks.
 '''
 
 import gtk
+import gobject
 import pango
 import logic
 
@@ -33,6 +34,8 @@ class Gui(object):
         self.main_window = self.builder.get_object("main_window")
         self.modules_menu = self.builder.get_object("modules")
         self.output_text = self.builder.get_object("output_text") #time phrase
+        self.hours_box = self.builder.get_object("hours")
+        self.minutes_box = self.builder.get_object("minutes")
 
         # ABOUT DIALOGUE
         self.about_dialogue = self.builder.get_object("about_dialogue")
@@ -77,6 +80,7 @@ class Gui(object):
         # INIT VALUES AND STATUS!
         self.hours = 0
         self.minutes = 0
+        self.keep_sync = False
         self.logic = logic.Logic(self.modules_menu, self.clock_change,
                                  self.update_clockface_stats)
         self.update_text()
@@ -106,10 +110,34 @@ class Gui(object):
         while gtk.events_pending():
             gtk.main_iteration(False)
 
+    def __sync_with_system_clock(self):
+        '''
+        Update currently displayed time with system clock.
+        '''
+        if self.keep_sync == False:
+            return False  #Remove this callback from the gtk main loop
+        current_time = self.logic.get_current_time()
+        if (self.hours, self.minutes) != current_time:
+            self.hours, self.minutes = current_time
+            self.hours_box.set_text(str(self.hours))
+            self.minutes_box.set_text(str(self.minutes))
+            self.update_text()
+            return True  #Keep the the callback in the main loop
+
     ##### MAIN WINDOW #####
 
     def on_main_window_destroy(self, widget, data=None):
         gtk.main_quit()
+
+    def on_keep_in_sync_toggled(self, widget, data=None):
+        self.keep_sync = widget.get_active()
+        if self.keep_sync:
+            gobject.timeout_add(500, self.__sync_with_system_clock)
+            self.hours_box.set_sensitive(False)
+            self.minutes_box.set_sensitive(False)
+        else:
+            self.hours_box.set_sensitive(True)
+            self.minutes_box.set_sensitive(True)
 
     def on_hours_value_changed(self, widget, data=None):
         self.hours = int(widget.get_text())
@@ -295,10 +323,15 @@ class Gui(object):
     ##### VIRTUAL WORDCLOCK #####
 
     def on_vclock_drawing_expose_event(self, widget, data=None):
-        tmp = self.vclock_cface.allocation
-        self.logic.vclock.refresh_params(max_pixel_dimension=min(tmp.width,
-                                                                 tmp.height))
-        self.logic.vclock.update()
+        # The vclock might not be present if the clockface hasn't been
+        # designed yet.
+        try:
+            tmp = self.vclock_cface.allocation
+            self.logic.vclock.refresh_params(max_pixel_dimension=min(tmp.width,
+                                                                     tmp.height))
+            self.logic.vclock.update()
+        except AttributeError:
+            pass
 
     def on_virtualclock_window_delete_event(self, widget, data=None):
         self.vclock_window.hide()
