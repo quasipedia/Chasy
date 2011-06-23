@@ -724,51 +724,70 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
                     <property name="can_focus">False</property>
                     <property name="ubuntu_local">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="projects">
+                      <object class="GtkMenuItem" id="file_new">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Create a new wordclock project.</property>
                         <property name="use_action_appearance">False</property>
-                        <property name="label" translatable="yes">_Projects</property>
+                        <property name="label" translatable="yes">_New</property>
                         <property name="use_underline">True</property>
-                        <child type="submenu">
-                          <object class="GtkMenu" id="menu4">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="ubuntu_local">True</property>
-                            <child>
-                              <object class="GtkMenuItem" id="file_save">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Save the current clockface project.</property>
-                                <property name="use_action_appearance">False</property>
-                                <property name="label" translatable="yes">_Save</property>
-                                <property name="use_underline">True</property>
-                                <signal name="activate" handler="on_file_save_activate" swapped="no"/>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkMenuItem" id="file_open">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Open a previously saved clockface project</property>
-                                <property name="use_action_appearance">False</property>
-                                <property name="label" translatable="yes">_Open</property>
-                                <property name="use_underline">True</property>
-                                <signal name="activate" handler="on_file_open_activate" swapped="no"/>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
+                        <accelerator key="n" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="on_file_new_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="modules">
+                      <object class="GtkMenuItem" id="file_open">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Switch between installed modules</property>
+                        <property name="tooltip_text" translatable="yes">Open a previously saved clockface project.</property>
                         <property name="use_action_appearance">False</property>
-                        <property name="label" translatable="yes">Modules</property>
+                        <property name="label" translatable="yes">_Open...</property>
                         <property name="use_underline">True</property>
+                        <accelerator key="o" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="on_file_open_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="file_save">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Save the current project.</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="label" translatable="yes">_Save</property>
+                        <property name="use_underline">True</property>
+                        <accelerator key="s" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="on_file_save_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="file_save_as">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Save a copy of the current project.</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="label" translatable="yes">Save _As...</property>
+                        <property name="use_underline">True</property>
+                        <accelerator key="a" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="on_file_save_as_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem" id="file_separator">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_action_appearance">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="file_quit">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Exit the program.</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="label" translatable="yes">_Quit</property>
+                        <property name="use_underline">True</property>
+                        <accelerator key="q" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="on_file_quit_activate" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -776,11 +795,48 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="text">
+              <object class="GtkMenuItem" id="Edit">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="use_action_appearance">False</property>
-                <property name="label" translatable="yes">_Text</property>
+                <property name="label" translatable="yes">_Edit</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu" id="menu4">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="edit_settings">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Modify the project settings.</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="label" translatable="yes">Project _Settings</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_edit_settings_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="edit_cface">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Organise the letters on the clockface.</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="label" translatable="yes">_Clockface</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_edit_cface_activate" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="tools">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="label" translatable="yes">_Tools</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="menu5">
@@ -788,11 +844,11 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
                     <property name="can_focus">False</property>
                     <property name="ubuntu_local">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="dump">
+                      <object class="GtkMenuItem" id="tools_dump">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
-                        <property name="label" translatable="yes">_Dump</property>
+                        <property name="label" translatable="yes">_Phrase dump</property>
                         <property name="use_underline">True</property>
                         <child type="submenu">
                           <object class="GtkMenu" id="menu1">
@@ -800,29 +856,29 @@ Be advised that although the sequence will work, &lt;b&gt;there is no guarantee 
                             <property name="can_focus">False</property>
                             <property name="ubuntu_local">True</property>
                             <child>
-                              <object class="GtkMenuItem" id="dump_full">
+                              <object class="GtkMenuItem" id="tools_dump_full">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+                                <property name="tooltip_text" translatable="yes">Generates the time phrases for each of the 1440 minutes in a day.
 
 Includes numeric values in the form "HH:MM".</property>
                                 <property name="use_action_appearance">False</property>
-                                <property name="label" translatable="yes">_Full</property>
+                                <property name="label" translatable="yes">With _Numbers</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="on_dump_full_activate" swapped="no"/>
+                                <signal name="activate" handler="on_tools_dump_full_activate" swapped="no"/>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkMenuItem" id="dump_textonly">
+                              <object class="GtkMenuItem" id="tools_dump_textonly">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Generates a text file with the phrases for each of the 1440 minutes in a day.
+                                <property name="tooltip_text" translatable="yes">Generates the time phrases for each of the 1440 minutes in a day.
 
 Phrases are NOT preceded by the HH:MM string.</property>
                                 <property name="use_action_appearance">False</property>
-                                <property name="label" translatable="yes">_Phrases only</property>
+                                <property name="label" translatable="yes">_Phrases Only</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="on_dump_textonly_activate" swapped="no"/>
+                                <signal name="activate" handler="on_tools_dump_textonly_activate" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -830,7 +886,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="analysis">
+                      <object class="GtkMenuItem" id="tools_analysis">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="use_action_appearance">False</property>
@@ -842,70 +898,69 @@ Phrases are NOT preceded by the HH:MM string.</property>
                             <property name="can_focus">False</property>
                             <property name="ubuntu_local">True</property>
                             <child>
-                              <object class="GtkMenuItem" id="analysis_word_stats">
+                              <object class="GtkMenuItem" id="tools_analysis_phrases">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="tooltip_text" translatable="yes">Provide statistics on the text used to output the time.</property>
+                                <property name="tooltip_text" translatable="yes">Provide statistics on the phrases used to output the time.</property>
                                 <property name="use_action_appearance">False</property>
-                                <property name="label" translatable="yes">_Text statistics</property>
+                                <property name="label" translatable="yes">_Phrases</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="on_analysis_word_stats_activate" swapped="no"/>
+                                <signal name="activate" handler="on_tools_analysis_phrases_activate" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="tools_analysis_cface">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="tooltip_text" translatable="yes">Provide statistics on the actual text being represented on the clockface.</property>
+                                <property name="use_action_appearance">False</property>
+                                <property name="label" translatable="yes">_Clockface</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="on_tools_analysis_cface_activate" swapped="no"/>
                               </object>
                             </child>
                           </object>
                         </child>
                       </object>
                     </child>
+                    <child>
+                      <object class="GtkMenuItem" id="tools_blueprints">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Generate the collection of files needed to build the actual wordclock.</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="label" translatable="yes">Generate _Blueprints</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_tools_blueprints_activate" swapped="no"/>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="clockface">
+              <object class="GtkMenuItem" id="help">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="use_action_appearance">False</property>
-                <property name="label" translatable="yes">_Clockface</property>
+                <property name="label" translatable="yes">_Help</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="menu6">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="ubuntu_local">True</property>
                     <child>
-                      <object class="GtkMenuItem" id="clockface_get_heuristics">
+                      <object class="GtkMenuItem" id="help_about">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Uses heuristic to perform the "Multiple Sequence Alignment" and find a possible supersequence able to generate all the time sentences of the clock.</property>
                         <property name="use_action_appearance">False</property>
-                        <property name="label" translatable="yes">_Heuristic MSA</property>
+                        <property name="label" translatable="yes">_About</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_clockface_get_heuristics_activate" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="clockface_auto_distribution">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Try to distribute words on the clockface automatically.</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="label" translatable="yes">_Auto Distribution</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="on_clockface_auto_distribution_activate" swapped="no"/>
+                        <signal name="activate" handler="on_help_about_activate" swapped="no"/>
                       </object>
                     </child>
                   </object>
                 </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkMenuItem" id="about">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="use_action_appearance">False</property>
-                <property name="label" translatable="yes">_About</property>
-                <property name="use_underline">True</property>
-                <signal name="activate" handler="on_about_activate" swapped="no"/>
               </object>
             </child>
           </object>
@@ -928,9 +983,20 @@ Phrases are NOT preceded by the HH:MM string.</property>
             </attributes>
           </object>
           <packing>
-            <property name="expand">True</property>
+            <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHSeparator" id="hseparator1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
           </packing>
         </child>
         <child>
@@ -939,7 +1005,7 @@ Phrases are NOT preceded by the HH:MM string.</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">False</property>
-            <property name="border_width">11</property>
+            <property name="border_width">5</property>
             <property name="use_action_appearance">False</property>
             <property name="draw_indicator">True</property>
             <signal name="toggled" handler="on_keep_in_sync_toggled" swapped="no"/>
@@ -947,25 +1013,26 @@ Phrases are NOT preceded by the HH:MM string.</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">2</property>
+            <property name="position">3</property>
           </packing>
         </child>
         <child>
           <object class="GtkHBox" id="hbox1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="hours_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="xalign">1</property>
+                <property name="xpad">5</property>
                 <property name="label" translatable="yes"> Hours</property>
                 <attributes>
                   <attribute name="weight" value="ultraheavy"/>
                 </attributes>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
@@ -986,8 +1053,9 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <signal name="value-changed" handler="on_hours_value_changed" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">False</property>
+                <property name="padding">5</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -995,13 +1063,15 @@ Phrases are NOT preceded by the HH:MM string.</property>
               <object class="GtkLabel" id="minutes_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Minutes</property>
+                <property name="xalign">1</property>
+                <property name="xpad">11</property>
+                <property name="label" translatable="yes">     Minutes</property>
                 <attributes>
                   <attribute name="weight" value="ultraheavy"/>
                 </attributes>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">2</property>
               </packing>
@@ -1022,8 +1092,9 @@ Phrases are NOT preceded by the HH:MM string.</property>
                 <signal name="value-changed" handler="on_minutes_value_changed" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">True</property>
+                <property name="expand">False</property>
                 <property name="fill">False</property>
+                <property name="padding">5</property>
                 <property name="position">3</property>
               </packing>
             </child>
@@ -1031,19 +1102,391 @@ Phrases are NOT preceded by the HH:MM string.</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">3</property>
+            <property name="position">4</property>
           </packing>
         </child>
         <child>
-          <object class="GtkDrawingArea" id="vclock_drawing">
+          <object class="GtkHSeparator" id="hseparator2">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <signal name="expose-event" handler="on_vclock_drawing_expose_event" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="padding">5</property>
+            <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox7">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkVBox" id="virtual_wordclock">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkTable" id="table2">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="n_rows">8</property>
+                    <property name="n_columns">2</property>
+                    <property name="column_spacing">8</property>
+                    <child>
+                      <object class="GtkLabel" id="label1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Background colour:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">1</property>
+                        <property name="bottom_attach">2</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkColorButton" id="vwc_bkground_button">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="color">#000000000000</property>
+                        <signal name="color-set" handler="on_vwc_bkground_button_color_set" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">1</property>
+                        <property name="bottom_attach">2</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label13">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Unlit chars colour:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">2</property>
+                        <property name="bottom_attach">3</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkColorButton" id="vwc_unlit_button">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="color">#808080808080</property>
+                        <signal name="color-set" handler="on_vwc_unlit_button_color_set" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">2</property>
+                        <property name="bottom_attach">3</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label14">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Regular chars colour:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">3</property>
+                        <property name="bottom_attach">4</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkColorButton" id="vwc_lit_button">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="color">#ffffffffffff</property>
+                        <signal name="color-set" handler="on_vwc_lit_button_color_set" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">3</property>
+                        <property name="bottom_attach">4</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label16">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">1</property>
+                        <property name="label" translatable="yes">Font selection:</property>
+                      </object>
+                      <packing>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkFontButton" id="vwc_font_button">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="font_name">Courier New 10</property>
+                        <property name="show_style">False</property>
+                        <property name="show_size">False</property>
+                        <signal name="font-set" handler="on_vwc_font_button_font_set" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label17">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Char spacing:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">4</property>
+                        <property name="bottom_attach">5</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label18">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Extra border:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">5</property>
+                        <property name="bottom_attach">6</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="vwc_charspace_spin">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="invisible_char">•</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="primary_icon_activatable">False</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="primary_icon_sensitive">True</property>
+                        <property name="secondary_icon_sensitive">True</property>
+                        <property name="adjustment">char_spacing_adjust</property>
+                        <signal name="value-changed" handler="on_vwc_charspace_spin_value_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">4</property>
+                        <property name="bottom_attach">5</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkSpinButton" id="vwc_borderspace_spin">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="invisible_char">•</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="primary_icon_activatable">False</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="primary_icon_sensitive">True</property>
+                        <property name="secondary_icon_sensitive">True</property>
+                        <property name="adjustment">border_spacing_adjust</property>
+                        <signal name="value-changed" handler="on_vwc_borderspace_spin_value_changed" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">5</property>
+                        <property name="bottom_attach">6</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label10">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Force case:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">6</property>
+                        <property name="bottom_attach">7</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkVBox" id="vbox5">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkCheckButton" id="vwc_enoforce_lower">
+                            <property name="label" translatable="yes">lowercase</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="use_action_appearance">False</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="vwc_enforce_case_toggled" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="vwc_enoforce_upper">
+                            <property name="label" translatable="yes">uppercase</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="use_action_appearance">False</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="vwc_enforce_case_toggled" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">6</property>
+                        <property name="bottom_attach">7</property>
+                        <property name="y_options">GTK_FILL</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label19">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0</property>
+                        <property name="ypad">5</property>
+                        <property name="label" translatable="yes">Styles:</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">7</property>
+                        <property name="bottom_attach">8</property>
+                        <property name="y_options"></property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkVBox" id="vbox6">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkCheckButton" id="vwc_bold">
+                            <property name="label" translatable="yes">bold</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="use_action_appearance">False</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_vwc_bold_toggled" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="vwc_italic">
+                            <property name="label" translatable="yes">italic</property>
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">False</property>
+                            <property name="use_action_appearance">False</property>
+                            <property name="draw_indicator">True</property>
+                            <signal name="toggled" handler="on_vwc_italic_toggled" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">7</property>
+                        <property name="bottom_attach">8</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="save_screenshot_button">
+                    <property name="label" translatable="yes">Save screenshot</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
+                    <signal name="clicked" handler="on_save_screenshot_button_clicked" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkDrawingArea" id="vclock_drawing">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <signal name="expose-event" handler="on_vclock_drawing_expose_event" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
-            <property name="position">4</property>
+            <property name="position">6</property>
           </packing>
         </child>
         <child>
@@ -1056,7 +1499,8 @@ Phrases are NOT preceded by the HH:MM string.</property>
           <packing>
             <property name="expand">False</property>
             <property name="fill">False</property>
-            <property name="position">5</property>
+            <property name="padding">5</property>
+            <property name="position">7</property>
           </packing>
         </child>
       </object>
@@ -1067,407 +1511,264 @@ Phrases are NOT preceded by the HH:MM string.</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkWindow" id="virtualclock_window">
+  <object class="GtkTextBuffer" id="module_description_buf"/>
+  <object class="GtkWindow" id="settings_window">
     <property name="can_focus">False</property>
-    <property name="title" translatable="yes">Virtual WordClock</property>
+    <property name="title" translatable="yes">Project settings</property>
     <property name="window_position">center</property>
-    <signal name="delete-event" handler="on_virtualclock_window_delete_event" swapped="no"/>
     <child>
-      <object class="GtkVBox" id="virtual_wordclock">
+      <object class="GtkNotebook" id="notebook1">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can_focus">True</property>
         <child>
-          <object class="GtkHBox" id="hbox6">
+          <object class="GtkVBox" id="vbox7">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkTable" id="table2">
+              <object class="GtkLabel" id="label22">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="n_rows">8</property>
-                <property name="n_columns">2</property>
-                <property name="column_spacing">5</property>
-                <property name="homogeneous">True</property>
-                <child>
-                  <object class="GtkLabel" id="label1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">The background color for the clockface</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Background colour:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="vwc_bkground_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="color">#000000000000</property>
-                    <signal name="color-set" handler="on_vwc_bkground_button_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label13">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">How should the character look when not lit</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Unlit chars colour:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">2</property>
-                    <property name="bottom_attach">3</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="vwc_unlit_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="color">#808080808080</property>
-                    <signal name="color-set" handler="on_vwc_unlit_button_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">2</property>
-                    <property name="bottom_attach">3</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label14">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Characters in time phrases</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Regular chars colour:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkColorButton" id="vwc_lit_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="color">#ffffffffffff</property>
-                    <signal name="color-set" handler="on_vwc_lit_button_color_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">3</property>
-                    <property name="bottom_attach">4</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label16">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">The font of the characters displayed</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Font selection:</property>
-                  </object>
-                  <packing>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkFontButton" id="vwc_font_button">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="font_name">Courier New 10</property>
-                    <property name="show_style">False</property>
-                    <property name="show_size">False</property>
-                    <signal name="font-set" handler="on_vwc_font_button_font_set" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label17">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Spacing between characters expressed as a percentage of the character size</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Char spacing:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">4</property>
-                    <property name="bottom_attach">5</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label18">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="tooltip_text" translatable="yes">Spacing around the character matrix expressed as a percentage of the character size</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Extra border:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">5</property>
-                    <property name="bottom_attach">6</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="vwc_charspace_spin">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">•</property>
-                    <property name="invisible_char_set">True</property>
-                    <property name="primary_icon_activatable">False</property>
-                    <property name="secondary_icon_activatable">False</property>
-                    <property name="primary_icon_sensitive">True</property>
-                    <property name="secondary_icon_sensitive">True</property>
-                    <property name="adjustment">char_spacing_adjust</property>
-                    <signal name="value-changed" handler="on_vwc_charspace_spin_value_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">4</property>
-                    <property name="bottom_attach">5</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="vwc_borderspace_spin">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">•</property>
-                    <property name="invisible_char_set">True</property>
-                    <property name="primary_icon_activatable">False</property>
-                    <property name="secondary_icon_activatable">False</property>
-                    <property name="primary_icon_sensitive">True</property>
-                    <property name="secondary_icon_sensitive">True</property>
-                    <property name="adjustment">border_spacing_adjust</property>
-                    <signal name="value-changed" handler="on_vwc_borderspace_spin_value_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">5</property>
-                    <property name="bottom_attach">6</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label10">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Force case:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">6</property>
-                    <property name="bottom_attach">7</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkVBox" id="vbox5">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkCheckButton" id="vwc_enoforce_lower">
-                        <property name="label" translatable="yes">lowercase</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="vwc_enforce_case_toggled" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="vwc_enoforce_upper">
-                        <property name="label" translatable="yes">uppercase</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="vwc_enforce_case_toggled" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">6</property>
-                    <property name="bottom_attach">7</property>
-                    <property name="y_options">GTK_FILL</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label19">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="xalign">0</property>
-                    <property name="ypad">5</property>
-                    <property name="label" translatable="yes">Styles:</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">7</property>
-                    <property name="bottom_attach">8</property>
-                    <property name="y_options"></property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkVBox" id="vbox6">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkCheckButton" id="vwc_bold">
-                        <property name="label" translatable="yes">bold</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="on_vwc_bold_toggled" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkCheckButton" id="vwc_italic">
-                        <property name="label" translatable="yes">italic</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
-                        <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="on_vwc_italic_toggled" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">7</property>
-                    <property name="bottom_attach">8</property>
-                  </packing>
-                </child>
+                <property name="xalign">0</property>
+                <property name="xpad">5</property>
+                <property name="label" translatable="yes">&lt;b&gt;Language module&lt;/b&gt;</property>
+                <property name="use_markup">True</property>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">10</property>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkHSeparator" id="hseparator3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHBox" id="hbox5">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkLabel" id="label23">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="xalign">0</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Module:</property>
+                    <property name="use_markup">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="sttng_module_lang_combo">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="sttng_module_name_combo">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkTextView" id="textview1">
+                <property name="height_request">50</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="editable">False</property>
+                <property name="wrap_mode">word</property>
+                <property name="cursor_visible">False</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="padding">5</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label24">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="xpad">5</property>
+                <property name="label" translatable="yes">&lt;b&gt;Clock resolution&lt;/b&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hseparator4">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkTable" id="table3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="n_rows">2</property>
+                <property name="n_columns">2</property>
+                <child>
+                  <object class="GtkLabel" id="label25">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="xalign">0</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Resolution in minutes:</property>
+                    <property name="use_markup">True</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label26">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="xalign">0</property>
+                    <property name="xpad">5</property>
+                    <property name="label" translatable="yes">Approximation method:</property>
+                    <property name="use_markup">True</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkVBox" id="vbox8">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkRadioButton" id="radiobutton1">
+                        <property name="label" translatable="yes">radiobutton</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="radiobutton2">
+                        <property name="label" translatable="yes">radiobutton</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">1</property>
+                    <property name="bottom_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkComboBox" id="sttng_accuracy_combo">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">6</property>
+              </packing>
             </child>
           </object>
+        </child>
+        <child type="tab">
+          <object class="GtkLabel" id="label15">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Phrase generation</property>
+          </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="padding">5</property>
-            <property name="position">0</property>
+            <property name="tab_fill">False</property>
           </packing>
         </child>
         <child>
           <placeholder/>
         </child>
-        <child>
-          <object class="GtkHBox" id="hbox5">
+        <child type="tab">
+          <object class="GtkLabel" id="label20">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="homogeneous">True</property>
-            <child>
-              <object class="GtkButton" id="save_cface_button">
-                <property name="label" translatable="yes">Save design</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Save the files needed to produce the clock</property>
-                <property name="use_action_appearance">False</property>
-                <signal name="clicked" handler="on_save_cface_button_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="save_screenshot_button">
-                <property name="label" translatable="yes">Save screenshot</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="tooltip_text" translatable="yes">Save a screenshot of the virtual clockface as shown now</property>
-                <property name="use_action_appearance">False</property>
-                <signal name="clicked" handler="on_save_screenshot_button_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
+            <property name="label" translatable="yes">Electronics</property>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">5</property>
+            <property name="position">1</property>
+            <property name="tab_fill">False</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child type="tab">
+          <object class="GtkLabel" id="label21">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Blueprints</property>
+          </object>
+          <packing>
             <property name="position">2</property>
+            <property name="tab_fill">False</property>
           </packing>
         </child>
       </object>

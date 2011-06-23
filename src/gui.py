@@ -34,8 +34,12 @@ class Gui(object):
         self.main_window = self.builder.get_object("main_window")
         self.modules_menu = self.builder.get_object("modules")
         self.output_text = self.builder.get_object("output_text") #time phrase
+        self.keep_sync_checkbox = self.builder.get_object("keep_in_sync")
         self.hours_box = self.builder.get_object("hours")
         self.minutes_box = self.builder.get_object("minutes")
+
+        # PROJECT SETTINGS WINDOW
+        self.settings_window = self.builder.get_object("settings_window")
 
         # ABOUT DIALOGUE
         self.about_dialogue = self.builder.get_object("about_dialogue")
@@ -72,21 +76,56 @@ class Gui(object):
                 self.builder.get_object("cf_optimisation_entry")
 
         # VIRTUAL WORDCLOCK
-        self.vclock_window = self.builder.get_object("virtualclock_window")
         self.vclock_cface = self.builder.get_object("vclock_drawing")
         self.vclock_uppercase = self.builder.get_object("vwc_enoforce_upper")
         self.vclock_lowercase = self.builder.get_object("vwc_enoforce_lower")
+
+        # PROJECT SETTING WINDOW
+        self.modlang_combo = self.builder.get_object("sttng_module_lang_combo")
+        self.modname_combo = self.builder.get_object("sttng_module_name_combo")
+        self.accuracy_combo = self.builder.get_object("sttng_accuracy_combo")
+        self.__populate_settings()
 
         # INIT VALUES AND STATUS!
         self.hours = 0
         self.minutes = 0
         self.keep_sync = False
-        self.logic = logic.Logic(self.modules_menu, self.clock_change,
-                                 self.update_clockface_stats)
-        self.update_text()
+
+        # Inibit the main window interactive elements
+        self.keep_sync_checkbox.set_sensitive(False)
+        self.hours_box.set_sensitive(False)
+        self.minutes_box.set_sensitive(False)
+#        self.logic = logic.Logic(self.modules_menu, self.clock_change,
+#                                 self.update_clockface_stats)
+#        self.update_text()
         self.main_window.show_all()
+        self.settings_window.show()
 
     ###### HELPER FUNCTIONS #####
+
+    def __populate_combo(self, combo, entries, select=None):
+        '''
+        Populate a combo with a series of values.
+        Optionally select the "select" entry as default.
+        '''
+        liststore = gtk.ListStore(gobject.TYPE_STRING)
+        for i in entries:
+            liststore.append([unicode(i)])
+        combo.set_model(liststore)
+        cell = gtk.CellRendererText()
+        combo.pack_start(cell, True)
+        combo.add_attribute(cell, 'text', 0)
+        if select != None:
+            assert select < len(entries)
+            combo.set_active(select)
+
+    def __populate_settings(self):
+        '''
+        Populate all the options in the setting window.
+        '''
+        # Clock accuracy
+        entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
+        self.__populate_combo(self.accuracy_combo, entries, 0)
 
     def __write_in_dump(self, what, how='ubuntu'):
         '''
@@ -124,6 +163,24 @@ class Gui(object):
             self.update_text()
             return True  #Keep the the callback in the main loop
 
+    def _supersequence_heuristics_show_dialogue(self):
+        '''
+        Display the heuristics dialogue when computing the supersequence.
+        '''
+        self.heuristic_explanation_label.set_markup(
+        "Chasy is using <i>heuristic</i> to find a sequence of words from " +
+        "which it will be possible to compose all the sentences of the " +
+        "clock. It will take about a minute.\n\n" +
+        "Be advised that although the sequence will work, <b>there is no " +
+        "guarantee it is the shortest possible one</b>. Knowing the grammar " +
+        "of the language in use, is sometimes possible to manually improve " +
+        "the automatic solution.")
+        self.msa_progress_bar.set_fraction(0)
+        self.heuristic_dialogue.show()
+        tmp = self.logic.get_sequence(
+                                callback=self.__update_msa_progress_values)
+        self.heuristic_dialogue.hide()
+
     ##### MAIN WINDOW #####
 
     def on_main_window_destroy(self, widget, data=None):
@@ -156,10 +213,9 @@ class Gui(object):
     def clock_change(self):
         self.dump_window.hide()
         self.cface_editor_window.hide()
-        self.vclock_window.hide()
         self.update_text()
 
-    def on_about_activate(self, widget, data=None):
+    def on_help_about_activate(self, widget, data=None):
         self.about_dialogue.show()
 
     def on_file_save_activate(self, widget, data=None):
@@ -168,49 +224,24 @@ class Gui(object):
     def on_file_open_activate(self, widget, data=None):
         self.logic.load_project()
         self.cface_editor_window.hide()
-        self.vclock_window.hide()
 
-    def on_dump_full_activate(self, widget, data=None):
+    def on_tools_dump_full_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
         self.__write_in_dump(text)
         self.dump_window.show()
 
-    def on_dump_textonly_activate(self, widget, data=None):
+    def on_tools_dump_textonly_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump())
         self.__write_in_dump(text)
         self.dump_window.show()
 
-    def on_analysis_word_stats_activate(self, widget, data=None):
+    def on_tools_analysis_phrases_activate(self, widget, data=None):
         stats = self.logic.get_phrases_analysis()
         self.__write_in_dump(stats, 'courier')
         self.dump_window.show()
 
-    def on_clockface_get_heuristics_activate(self, widget, data=None):
-        self.heuristic_explanation_label.set_markup(
-        "Chasy is using <i>heuristic</i> to find a sequence of words from " +
-        "which it will be possible to compose all the sentences of the " +
-        "clock. It will take about a minute.\n\n" +
-        "Be advised that although the sequence will work, <b>there is no " +
-        "guarantee it is the shortest possible one</b>. Knowing the grammar " +
-        "of the language in use, is sometimes possible to manually improve " +
-        "the automatic solution.")
-        self.msa_progress_bar.set_fraction(0)
-        self.heuristic_dialogue.show()
-        tmp = self.logic.get_sequence(
-                                callback=self.__update_msa_progress_values)
-        self.heuristic_dialogue.hide()
-        if tmp == -1:
-            return -1
-        if widget != None:  # if the function has been called programmatically
-            text = self.logic.supersequence.get_sequence_as_string()
-            lines = '\n'.join(text.split())
-            self.dump_buffer.set_text(lines)
-            self.dump_window.show()
-
-    def on_clockface_auto_distribution_activate(self, widget, data=None):
-        tmp = self.on_clockface_get_heuristics_activate(None)
-        if tmp == -1:
-            return -1
+    def on_edit_cface_activate(self, widget, data=None):
+        tmp = self.__supersequence_heuristics_show_dialogue()
         self.logic.show_clockface(self.clockface_image,
                                   self.col_number_adjustment,
                                   self.update_clockface_stats)
@@ -300,7 +331,6 @@ class Gui(object):
 
     def on_cfe_generate_virtual_clicked(self, widget, data=None):
         self.logic.generate_vclock(self.vclock_cface)
-        self.vclock_window.show()
         self.logic.vclock.update()
 
     def on_cfe_generate_code_clicked(self, widget, data=None):
@@ -332,10 +362,6 @@ class Gui(object):
             self.logic.vclock.update()
         except AttributeError:
             pass
-
-    def on_virtualclock_window_delete_event(self, widget, data=None):
-        self.vclock_window.hide()
-        return True
 
     def on_vwc_font_button_font_set(self, widget, data=None):
         font_face = widget.get_font_name()
@@ -391,13 +417,6 @@ class Gui(object):
     def on_vwc_bold_toggled(self, widget, data=None):
         self.logic.vclock.refresh_params(bold=widget.get_active())
         self.logic.vclock.update()
-
-    def on_custom_phrase_combo_changed(self, widget, data=None):
-        print('customphrase lit', data)
-        self.logic.vclock.update()
-
-    def on_save_cface_button_clicked(self, widget, data=None):
-        print('save design', data)
 
     def on_save_screenshot_button_clicked(self, widget, data=None):
         self.logic.vclock.get_shot('svg')

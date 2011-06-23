@@ -89,20 +89,6 @@ class Logic(object):
                 imported = sys.modules[module_name]
                 human_name = getattr(imported, 'Clock').__module_name__
                 self.available_modules[human_name] = imported
-        # Populate the parent menu with modules names
-        mod_menu = gtk.Menu()
-        group = None
-        for name in sorted(self.available_modules):
-            item = gtk.RadioMenuItem(group, label=name)
-            mod_menu.append(item)
-            if group == None:
-                group = item
-                initial_module = name
-            item.connect("toggled", self.switch_clock, name)
-        parent_menu.set_submenu(mod_menu)
-        # Pick the first module of the list to start with
-        self.clock = self.available_modules[initial_module].Clock()
-        group.set_active(True)
 
     def _get_min_avg_max(self, string_series, what, return_as_text=True):
         '''
