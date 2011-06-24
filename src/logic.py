@@ -5,7 +5,6 @@ Core logic for the Chasy program.
 '''
 
 import textwrap
-import gtk
 import itertools
 import difflib
 import math
@@ -14,7 +13,6 @@ import datetime
 import clockmanager
 import supseq
 import clockface
-import pickle
 import virtualclock
 
 
@@ -493,34 +491,6 @@ class Logic(object):
             return False
         self.cface.display()
         return True
-
-
-    def save_project(self):
-        '''
-        Save to disk the essential data on the project.
-        '''
-        project = dict()
-        project['clock_module'] = self.clock.__module_name__
-        project['supersequence'] = None if not self.supersequence else\
-                                   self.supersequence
-        file_ = open('../data/saved.sav', 'w')
-        # Protocol 0 (default one *will* generate problems with cyclic
-        # reference of sequence and elements.
-        pickle.dump(project, file_, pickle.HIGHEST_PROTOCOL)
-        file_.close()
-
-    def load_project(self):
-        '''
-        Load a project from disk and regenerate the environment to match it.
-        '''
-        file_ = open('../data/saved.sav', 'r')
-        project = pickle.load(file_)
-        file_.close()
-        cm = self.clock_manager
-        self.clock = cm.get_clock_instance(project['clock_module'])
-        self.swap_clock_callback()
-        if project['supersequence'] != None:
-            self.supersequence = project['supersequence']
 
     def generate_vclock(self, drawing_area):
         '''

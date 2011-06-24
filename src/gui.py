@@ -97,6 +97,9 @@ class Gui(object):
             self.builder.get_object("module_description_buffer")
         self.__populate_settings()
 
+        # FILE CHOOSER
+        self.file_chooser_window = self.builder.get_object("file_chooser")
+
         # INIT VALUES AND STATUS!
         self.hours = 0
         self.minutes = 0
@@ -294,12 +297,19 @@ class Gui(object):
     def on_help_about_activate(self, widget, data=None):
         self.about_dialogue.show()
 
+    def on_file_save_as_activate(self, widget, data=None):
+        self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_SAVE)
+        self.file_chooser_window.show()
+
     def on_file_save_activate(self, widget, data=None):
-        self.logic.save_project()
+        self.on_file_save_as_activate(None)
+#        self.logic.save_project()
 
     def on_file_open_activate(self, widget, data=None):
-        self.logic.load_project()
-        self.cface_editor_window.hide()
+        self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
+        self.file_chooser_window.show()
+#        self.logic.load_project()
+#        self.cface_editor_window.hide()
 
     def on_tools_dump_full_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
@@ -493,6 +503,19 @@ class Gui(object):
         cm = self.logic.clock_manager
         description = cm.get_module_description(module)
         self.mod_textbuffer.set_text(description)
+
+    ##### PROJECT SETTINGS #####
+
+    def on_file_chooser_response(self, widget, data=None):
+        widget.hide()
+        fname = widget.get_filename()
+        if data < 0:  # Cancel button or window closed
+            return
+        assert data in (1, 2)  # OPEN and SAVE opcodes respectively
+        if data == 1:
+            pass
+        elif data == 2:
+            pass
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''
