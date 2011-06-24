@@ -4,7 +4,7 @@
 Ancestor for clock plugins.
 
 All clock plugins should subclass from baseclock.Clock and should provide
-at least the "get_time_phrase" method.
+at least the "__build_time_phrase" method.
 '''
 
 __author__ = "Mac Ryan"
@@ -16,6 +16,16 @@ __status__ = "Development"
 
 
 class Clock(object):
+
+    def __init__(self, resolution, approx_method):
+        self.resolution = resolution
+        self.approx_method = approx_method
+
+    def __build_time_phrase(self, hours, minutes):
+        '''
+        Placeholder method that should ALWAYS be overridden by clock modules.
+        '''
+        return 'ERROR: No module installed'
 
     def _word_select(self, key, choices):
         '''
@@ -29,11 +39,22 @@ class Clock(object):
                 return value
         raise Exception("Key out of range: " + str(key))
 
+    def approximate(self, hours, minutes):
+        '''
+        Return a tuple (hours, minutes) of the input time according
+        to the approximation method "method" applied with a given "resolution"
+        in minutes.
+        '''
+        input = hours*60 + minutes
+        res = self.resolution
+        if self.approx_method == 'closest':
+            output = int(round(input/float(res)) * res)
+        if self.approx_method == 'last':
+            output = input/res * res
+        return (output/60, output%60)
+
     def get_time_phrase(self, hours, minutes):
-        '''
-        Placeholder method that should ALWAYS be overridden by clock modules.
-        '''
-        return 'ERROR: No module installed'
+        return self.__build_time_phrase(*self.approximate(hours, minutes))
 
     def get_phrases_dump(self, with_numbers=False):
         '''

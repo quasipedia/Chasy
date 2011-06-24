@@ -285,10 +285,10 @@ class Logic(object):
         Process the project settings.
         '''
         prs = self.project.project_settings
-        for k,v in settings.items():
+        for k in settings:
             if k in self.project.PRJ_STTNGS_PHRASES:
-                mod_name = prs['clock']
-                self.clock = self.clock_manager.get_clock_instance(mod_name)
+                args = (prs['clock'], prs['resolution'], prs['approx_method'])
+                self.clock = self.clock_manager.get_clock_instance(*args)
 
     def on_project_updated(self, widget, data=None):
         '''

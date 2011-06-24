@@ -66,12 +66,11 @@ class ClockManager(object):
         tmp = lambda n : self._get_module_specialstring(n, 'language')
         return [name for name in self.modules if tmp(name) == language]
 
-    def get_clock_instance(self, module_name):
+    def get_clock_instance(self, module_name, resolution, approx_method):
         '''
         Return a clock instance from module "module_name"
         '''
-        return self.modules[module_name].Clock()
-
+        return self.modules[module_name].Clock(resolution, approx_method)
 
     def get_module_description(self, module_name):
         '''

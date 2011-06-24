@@ -248,8 +248,7 @@ class Gui(gobject.GObject):
         "the automatic solution.")
         self.msa_progress_bar.set_fraction(0)
         self.heuristic_dialogue.show()
-        tmp = self.logic.get_sequence(
-                                callback=self.__update_msa_progress_values)
+        self.logic.get_sequence(callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
 
     ##### SPECIAL HANDLERS #####
@@ -350,12 +349,21 @@ class Gui(gobject.GObject):
         self.__write_in_dump(stats, 'courier')
         self.dump_window.show()
 
+    def on_tools_blueprints_activate(self, widget, data=None):
+        print('blueprints galore!')
+
+    def on_tools_analysis_cface_activate(self, widget, data=None):
+        print('analitical tools galore!')
+
     def on_edit_cface_activate(self, widget, data=None):
-        tmp = self.__supersequence_heuristics_show_dialogue()
+        self.__supersequence_heuristics_show_dialogue()
         self.logic.show_clockface(self.clockface_image,
                                   self.col_number_adjustment,
                                   self.update_clockface_stats)
         self.cface_editor_window.show()
+
+    def on_edit_settings_activate(self, widget, data=None):
+        self.settings_window.show()
 
     ##### DUMP WINDOW #####
 
