@@ -24,83 +24,79 @@ class Gui(gobject.GObject):
     '''
 
     def __init__(self):
-        self.logic = logic.Logic(self.clock_change,
-                                 self.update_clockface_stats)
+        self.logic = logic.Logic()
+        # Connect after, because the Gui() needs Logic() handlers to
+        # process the project data first
+        self.logic.project.connect_after("project_updated",
+                                         self.on_project_updated)
 
         self.gui_file = "../data/gui.xml"
         self.builder = gtk.Builder()
+        go = self.builder.get_object
         self.builder.add_from_file(self.gui_file)
         self.builder.connect_signals(self)
 
         # MAIN WINDOW
-        self.main_window = self.builder.get_object("main_window")
-        self.modules_menu = self.builder.get_object("modules")
-        self.output_text = self.builder.get_object("output_text") #time phrase
-        self.sync_checkbox = self.builder.get_object("keep_in_sync")
-        self.hours_box = self.builder.get_object("hours")
-        self.minutes_box = self.builder.get_object("minutes")
-        self.menubar = self.builder.get_object("menu_bar")
+        self.main_window = go("main_window")
+        self.modules_menu = go("modules")
+        self.output_text = go("output_text") #time phrase
+        self.sync_checkbox = go("keep_in_sync")
+        self.hours_box = go("hours")
+        self.minutes_box = go("minutes")
+        self.menubar = go("menu_bar")
         # Menu items that can be sensitive even without a project
         self.safe_menuitems = ['file_new', 'file_open', 'file_quit',
                                'help_about']
 
         # PROJECT SETTINGS WINDOW
-        self.settings_window = self.builder.get_object("settings_window")
+        self.settings_window = go("settings_window")
 
         # ABOUT DIALOGUE
-        self.about_dialogue = self.builder.get_object("about_dialogue")
+        self.about_dialogue = go("about_dialogue")
 
         # TEXT DUMP
-        self.dump_window = self.builder.get_object("dump_window")
-        self.dump_textview = self.builder.get_object("dump_textview")
-        self.dump_buffer = self.builder.get_object("dump_buffer")
+        self.dump_window = go("dump_window")
+        self.dump_textview = go("dump_textview")
+        self.dump_buffer = go("dump_buffer")
 
         # HEURISTICS
-        self.heuristic_dialogue = \
-                self.builder.get_object("heuristic_dialogue")
-        self.heuristic_explanation_label = \
-                self.builder.get_object("heuristic_explanation_label")
-        self.msa_progress_bar = self.builder.get_object("heuristic_progress")
-        self.msa_time_left_label = \
-                self.builder.get_object("heuristic_time_left_label")
-        self.msa_phase_label = \
-                self.builder.get_object("heuristic_phase_label")
+        self.heuristic_dialogue = go("heuristic_dialogue")
+        self.heuristic_explanation_label = go("heuristic_explanation_label")
+        self.msa_progress_bar = go("heuristic_progress")
+        self.msa_time_left_label = go("heuristic_time_left_label")
+        self.msa_phase_label = go("heuristic_phase_label")
 
         # CLOCKFACE EDITOR
-        self.cface_editor_window = \
-                self.builder.get_object("cface_editor_window")
-        self.clockface_image = self.builder.get_object("clockface_image")
-        self.col_number_adjustment = \
-                self.builder.get_object("col_number_adjustment")
-        self.cf_word_number_entry = \
-                self.builder.get_object("cf_word_number_entry")
-        self.cf_width_entry = self.builder.get_object("cf_width_entry")
-        self.cf_height_entry = self.builder.get_object("cf_height_entry")
-        self.cf_ratio_entry = self.builder.get_object("cf_ratio_entry")
-        self.cf_wasted_entry = self.builder.get_object("cf_wasted_entry")
-        self.cf_optimisation_entry = \
-                self.builder.get_object("cf_optimisation_entry")
+        self.cface_editor_window = go("cface_editor_window")
+        self.clockface_image = go("clockface_image")
+        self.col_number_adjustment = go("col_number_adjustment")
+        self.cf_word_number_entry = go("cf_word_number_entry")
+        self.cf_width_entry = go("cf_width_entry")
+        self.cf_height_entry = go("cf_height_entry")
+        self.cf_ratio_entry = go("cf_ratio_entry")
+        self.cf_wasted_entry = go("cf_wasted_entry")
+        self.cf_optimisation_entry = go("cf_optimisation_entry")
 
         # VIRTUAL WORDCLOCK
-        self.vclock_cface = self.builder.get_object("vclock_drawing")
-        self.vclock_settings = self.builder.get_object("vclock_settings")
-        self.vclock_uppercase = self.builder.get_object("vwc_enoforce_upper")
-        self.vclock_lowercase = self.builder.get_object("vwc_enoforce_lower")
+        self.vclock_cface = go("vclock_drawing")
+        self.vclock_settings = go("vclock_settings")
+        self.vclock_uppercase = go("vwc_enoforce_upper")
+        self.vclock_lowercase = go("vwc_enoforce_lower")
 
         # PROJECT SETTING WINDOW
-        self.modlang_combo = self.builder.get_object("sttng_module_lang_combo")
-        self.modname_combo = self.builder.get_object("sttng_module_name_combo")
-        self.accuracy_combo = self.builder.get_object("sttng_accuracy_combo")
-        self.module_description_tv = \
-            self.builder.get_object("module_description_tv")
-        self.mod_textbuffer = \
-            self.builder.get_object("module_description_buffer")
+        self.sttng_modlang_combo = go("sttng_module_lang_combo")
+        self.sttng_modname_combo = go("sttng_module_name_combo")
+        self.sttng_accuracy_combo = go("sttng_accuracy_combo")
+        self.sttng_approx_closest = go("approx_closest")
+        self.sttng_approx_last = go("approx_last_step")
+        self.sttng_mod_description = go("sttng_mod_description")
+        self.sttng_mod_textbuffer = go("module_description_buffer")
         self.__populate_settings()
 
         # FILE CHOOSER
-        self.file_chooser_window = self.builder.get_object("file_chooser")
-        self.file_open_button = self.builder.get_object("open_file_button")
-        self.file_save_button = self.builder.get_object("save_file_button")
+        self.file_chooser_window = go("file_chooser")
+        self.file_open_button = go("open_file_button")
+        self.file_save_button = go("save_file_button")
 
         # INIT VALUES AND STATUS!
         self.hours = 0
@@ -112,35 +108,6 @@ class Gui(gobject.GObject):
 
 
     ###### HELPER METHODS #####
-
-    def __set_safe_mode(self, safestate):
-        '''
-        The 'safe mode' is the mode in which the program runs without an
-        open project (for example at startup or if a project has been closed).
-        This helper method deactivate all menu entries and other UI elements
-        that are project-related.
-        safestate == True → safe mode ON
-        safestate == False → safe mode OFF.
-        '''
-        assert safestate in (True, False)
-        # Toggling conditions
-        self.sync_checkbox.set_sensitive(not safestate)
-        self.hours_box.set_sensitive(not safestate)
-        self.minutes_box.set_sensitive(not safestate)
-        for elem in self.menubar.get_children():
-            for item in elem.get_submenu().get_children():
-                item.set_sensitive(not safestate)
-        # State-specific conditions
-        if safestate:
-            for menuitem_name in self.safe_menuitems:
-                menuitem = self.builder.get_object(menuitem_name)
-                menuitem.set_sensitive(True)
-            self.vclock_cface.hide()
-            self.vclock_settings.hide()
-            self.update_text(reset=True)
-        else:
-            self.vclock_cface.show()
-            self.vclock_settings.show()
 
     def __populate_combo(self, combo, entries, select=None):
         '''
@@ -166,12 +133,12 @@ class Gui(gobject.GObject):
         filter that can change, so it needs to be performed not only at
         initialisation time.
         '''
-        index = self.modlang_combo.get_active()
+        index = self.sttng_modlang_combo.get_active()
         # first entry is in language box is '---' which is "no filter"
         lang = None if index == 0 else self.clock_languages_entries[index]
         cm = self.logic.clock_manager
         self.clock_modules_entries = cm.get_all_module_names(lang)
-        self.__populate_combo(self.modname_combo,
+        self.__populate_combo(self.sttng_modname_combo,
                               self.clock_modules_entries, 0)
 
     def __populate_settings(self):
@@ -179,13 +146,14 @@ class Gui(gobject.GObject):
         Populate all the options in the setting window.
         '''
         # Clock accuracy
-        entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
-        self.__populate_combo(self.accuracy_combo, entries, 0)
+        self.resolution_entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
+        self.__populate_combo(self.sttng_accuracy_combo,
+                              self.resolution_entries, 0)
         # Clock languages
         cm = self.logic.clock_manager
         self.clock_languages_entries = cm.get_all_languages()
         self.clock_languages_entries.insert(0, '*all*')
-        self.__populate_combo(self.modlang_combo,
+        self.__populate_combo(self.sttng_modlang_combo,
                               self.clock_languages_entries, 0)
         # Clock modules
         self.__populate_clock_modules_combo()
@@ -226,6 +194,46 @@ class Gui(gobject.GObject):
             self.update_text()
             return True  #Keep the the callback in the main loop
 
+    def __show_vclock_elements(self, show):
+        '''
+        Show or hide GUI elements that have to do with the virtual clock.
+        '''
+        assert show in (True, False)
+        if show:
+            self.vclock_cface.show()
+            self.vclock_settings.show()
+        else:
+            self.vclock_cface.hide()
+            self.vclock_settings.hide()
+
+
+    def __set_safe_mode(self, safestate):
+        '''
+        The 'safe mode' is the mode in which the program runs without an
+        open project (for example at startup or if a project has been closed).
+        This helper method deactivate all menu entries and other UI elements
+        that are project-related. It only modifies elements in the main window.
+        safestate == True → safe mode ON
+        safestate == False → safe mode OFF.
+        '''
+        assert safestate in (True, False)
+        # Toggling conditions
+        self.sync_checkbox.set_sensitive(not safestate)
+        self.hours_box.set_sensitive(not safestate)
+        self.minutes_box.set_sensitive(not safestate)
+        for elem in self.menubar.get_children():
+            for item in elem.get_submenu().get_children():
+                item.set_sensitive(not safestate)
+        # State-specific conditions
+        if safestate:
+            for menuitem_name in self.safe_menuitems:
+                menuitem = self.builder.get_object(menuitem_name)
+                menuitem.set_sensitive(True)
+            self.__show_vclock_elements(False)
+            self.update_text(reset=True)
+        elif self.logic.project.supersequence != None:
+            self.__show_vclock_elements(True)
+
     def _supersequence_heuristics_show_dialogue(self):
         '''
         Display the heuristics dialogue when computing the supersequence.
@@ -243,6 +251,21 @@ class Gui(gobject.GObject):
         tmp = self.logic.get_sequence(
                                 callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
+
+    ##### SPECIAL HANDLERS #####
+    # Special handlers are generic handlers or non GUI-generated handlers
+
+    def on_project_updated(self, widget, data=None):
+        '''
+        This handles a signal from project, not from the GUI directly.
+        '''
+        # Safe mode?
+        self.__set_safe_mode((True, False)[widget.is_populated()])
+        # Make sense to display clockface editor and virtual clock?
+        if widget.supersequence == None:
+            self.__show_vclock_elements(False)
+        self.dump_window.hide()
+        self.update_text()
 
     def on_close_no_destroy(self, widget, data=None):
         '''
@@ -290,11 +313,6 @@ class Gui(gobject.GObject):
         self.output_text.set_text(phrase)
 
     ##### MAIN MENU #####
-
-    def clock_change(self):
-        self.dump_window.hide()
-        self.cface_editor_window.hide()
-        self.update_text()
 
     def on_help_about_activate(self, widget, data=None):
         self.about_dialogue.show()
@@ -508,7 +526,26 @@ class Gui(gobject.GObject):
         module = self.clock_modules_entries[widget.get_active()]
         cm = self.logic.clock_manager
         description = cm.get_module_description(module)
-        self.mod_textbuffer.set_text(description)
+        self.sttng_mod_textbuffer.set_text(description)
+
+    def on_setting_apply_button_clicked(self, widget, data=None):
+        settings = {}
+        # Clock module
+        settings['clock'] = \
+            self.clock_modules_entries[self.sttng_modname_combo.get_active()]
+        # Clock resolution
+        settings['resolution'] = \
+            self.resolution_entries[self.sttng_accuracy_combo.get_active()]
+        # Approximation method
+        if self.sttng_approx_closest.get_active():
+            tmp = 'closest'
+        elif self.sttng_approx_last.get_active():
+            tmp = 'last'
+        settings['approx_method'] = tmp
+        # Update project state and trigger message release
+        self.logic.project.project_settings = settings
+        self.logic.project.broadcast_change()
+        self.settings_window.hide()
 
     ##### PROJECT SETTINGS #####
 

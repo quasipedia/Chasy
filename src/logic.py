@@ -67,8 +67,7 @@ class Logic(object):
     specific functionality, which is given by individual clock modules.
     '''
 
-    def __init__(self, swap_clock_callback, cface_modified_callback,
-                 debug=False):
+    def __init__(self, debug=False):
         self.clock_manager = clockmanager.ClockManager()
 
         # Initialise the Project singleton and connects callbacks.
@@ -80,8 +79,6 @@ class Logic(object):
         # The debug mode of using the class is command-line only...
         if debug == True:
             return
-        self.swap_clock_callback = swap_clock_callback
-        self.cface_modified_callback = cface_modified_callback
 
     def _get_min_avg_max(self, string_series, what, return_as_text=True):
         '''
@@ -283,10 +280,24 @@ class Logic(object):
         now = datetime.datetime.now()
         return (now.hour, now.minute)
 
+    def process_project_settings(self, settings):
+        '''
+        Process the project settings.
+        '''
+        prs = self.project.project_settings
+        for k,v in settings.items():
+            if k in self.project.PRJ_STTNGS_PHRASES:
+                mod_name = prs['clock']
+                self.clock = self.clock_manager.get_clock_instance(mod_name)
+
     def on_project_updated(self, widget, data=None):
-        print('Project updated!', data)
+        '''
+        Process the project changes. "data" is a dictionary of properties,
+        see the "Project" class in the project module for details.
+        '''
         for k, v in data.items():
-            print(k, v)
+            if k == 'project_settings':
+                self.process_project_settings(v)
 
     def switch_clock(self, widget, clock_name):
         '''

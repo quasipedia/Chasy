@@ -39,6 +39,8 @@ class Project(gobject.GObject):
                  'vclock_settings',
                  'electronics_settings',
                  'supersequence']
+    # Project settings grouping
+    PRJ_STTNGS_PHRASES = ('clock', 'resolution', 'approx_method')
 
     def __init__(self):
         self.__gobject_init__()
@@ -49,7 +51,8 @@ class Project(gobject.GObject):
         Reset all those properties of the object that are project-specific.
         '''
         for property in self.SAVE_MASK:
-            setattr(self, property, None)
+            if property != 'SCHEMA_VERSION':  # don't overwrite class property!
+                setattr(self, property, None)
         self.saved_state = self.__get_masked_dict()
         self.last_save_fname = None
 
@@ -62,7 +65,7 @@ class Project(gobject.GObject):
             dict_[pr] = getattr(self, pr)
         return dict_
 
-    def __broadcast_change(self):
+    def broadcast_change(self):
         '''
         This generator check against the last saved state of the SAVE_MASK
         properties and the one of the project when __broadcast is called.
@@ -82,6 +85,15 @@ class Project(gobject.GObject):
                 self.saved_state = new_state
                 self.emit("project_updated", data)
             return has_changed
+
+    def is_populated(self):
+        '''
+        Return True if the project is populated.
+        '''
+        for pr in self.SAVE_MASK:
+            if getattr(self, pr) != None:
+                return True
+        return False
 
     def save(self, fname=None):
         '''
@@ -114,11 +126,11 @@ class Project(gobject.GObject):
         prj = pickle.load(file_)
         file_.close()
         # Schema version compatibility check (mostly for future!)
-        assert prj['SCHEMA_VERSION'] == self.SCHEMA_VERSION
-        del prj['SCHEMA_VERSION']
+#        assert prj['SCHEMA_VERSION'] == self.SCHEMA_VERSION
+#        del prj['SCHEMA_VERSION']
         for property in prj:
             setattr(self, property, prj[property])
-        self.__broadcast_change()
+        self.broadcast_change()
 
 
 # These lines register specific signals into the GObject framework.
