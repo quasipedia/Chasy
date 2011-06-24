@@ -9,6 +9,8 @@ of projects (e.g. saving/loading from drive).
 '''
 
 import pickle
+import os.path
+import gobject
 
 
 __author__ = "Mac Ryan"
@@ -19,11 +21,12 @@ __email__ = "quasipedia@gmail.com"
 __status__ = "Development"
 
 
-class Project(object):
+class Project(gobject.GObject):
 
     '''
     A project object stores all available information on a given project.
-    Normally used as singleton.
+    Normally used as singleton; it's a gobject.GObject child in order to be
+    able to be able to generate signals (see the bottom of this module).
     '''
 
     DEFAULT_EXTENSION = 'sav'
@@ -38,41 +41,90 @@ class Project(object):
                  'supersequence']
 
     def __init__(self):
-        # Initialise properties.
+        self.__gobject_init__()
+        self.__reset_project()
+
+    def __reset_project(self):
+        '''
+        Reset all those properties of the object that are project-specific.
+        '''
         for property in self.SAVE_MASK:
             setattr(self, property, None)
+        self.saved_state = self.__get_masked_dict()
+        self.last_save_fname = None
 
-    def save(self, fname):
+    def __get_masked_dict(self):
         '''
-        Save to disk the essential data on the project.
+        Returns a dictionary with the properties indicated in "SAVE_MASK".
         '''
-        project = dict()
+        dict_ = {}
+        for pr in self.SAVE_MASK:
+            dict_[pr] = getattr(self, pr)
+        return dict_
+
+    def __broadcast_change(self):
+        '''
+        This generator check against the last saved state of the SAVE_MASK
+        properties and the one of the project when __broadcast is called.
+        If the state is changed, it emits the signal "project_updated" with
+        a dictionary of the properties that have changed.
+        Return True if the state of the project has changed.
+        '''
+        while True:
+            has_changed = False
+            new_state = self.__get_masked_dict()
+            if self.saved_state != new_state:
+                has_changed = True
+                data = {}
+                for pr in self.SAVE_MASK:
+                    if self.saved_state[pr] != new_state[pr]:
+                        data[pr] = new_state[pr]
+                self.saved_state = new_state
+                self.emit("project_updated", data)
+            return has_changed
+
+    def save(self, fname=None):
+        '''
+        Save to disk the essential data on the project. If fname is not given,
+        uses the name used on the last save operation.
+        '''
+        # If the file have not been given an extension, uses the default one
+        if '.' not in os.path.split(fname)[1]:
+            fname += '.' + self.DEFAULT_EXTENSION
+        # Automatic save (no file name selection)
+        if fname == None:
+            assert self.last_save_fname != None
+            fname = self.last_save_fname
+        prj = dict()
         for property in self.SAVE_MASK:
-            project[property] = getattr(self, property)
+            prj[property] = getattr(self, property)
         file_ = open(fname, 'w')
         # Protocol 0 (default one *will* generate problems with cyclic
         # reference of sequence and elements.
-        pickle.dump(project, file_, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(prj, file_, pickle.HIGHEST_PROTOCOL)
         file_.close()
+        self.last_save_fname = fname
 
     def load(self, fname):
         '''
         Load a project from disk and regenerate the environment to match it.
         '''
+        self.__reset_project()
         file_ = open(fname, 'r')
-        project = pickle.load(file_)
+        prj = pickle.load(file_)
         file_.close()
         # Schema version compatibility check (mostly for future!)
-        assert project['SCHEMA_VERSION'] == self.SCHEMA_VERSION
-        del project['SCHEMA_VERSION']
-        for property in project:
-            setattr(self, property, project[property])
-#        cm = self.clock_manager
-#        self.clock = cm.get_clock_instance(project['clock_module'])
-#        self.swap_clock_callback()
-#        if project['supersequence'] != None:
-#            self.supersequence = project['supersequence']
+        assert prj['SCHEMA_VERSION'] == self.SCHEMA_VERSION
+        del prj['SCHEMA_VERSION']
+        for property in prj:
+            setattr(self, property, prj[property])
+        self.__broadcast_change()
 
+
+# These lines register specific signals into the GObject framework.
+gobject.type_register(Project)
+gobject.signal_new("project_updated", Project, gobject.SIGNAL_RUN_FIRST,
+                   gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
 
 
 def run_as_script():

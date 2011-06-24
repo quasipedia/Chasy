@@ -17,7 +17,7 @@ __email__ = "quasipedia@gmail.com"
 __status__ = "Development"
 
 
-class Gui(object):
+class Gui(gobject.GObject):
 
     '''
     Provide the visual environment for interacting with the boat from the PC.
@@ -99,6 +99,8 @@ class Gui(object):
 
         # FILE CHOOSER
         self.file_chooser_window = self.builder.get_object("file_chooser")
+        self.file_open_button = self.builder.get_object("open_file_button")
+        self.file_save_button = self.builder.get_object("save_file_button")
 
         # INIT VALUES AND STATUS!
         self.hours = 0
@@ -299,6 +301,8 @@ class Gui(object):
 
     def on_file_save_as_activate(self, widget, data=None):
         self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_SAVE)
+        self.file_open_button.hide()
+        self.file_save_button.show()
         self.file_chooser_window.show()
 
     def on_file_save_activate(self, widget, data=None):
@@ -307,6 +311,8 @@ class Gui(object):
 
     def on_file_open_activate(self, widget, data=None):
         self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
+        self.file_open_button.show()
+        self.file_save_button.hide()
         self.file_chooser_window.show()
 #        self.logic.load_project()
 #        self.cface_editor_window.hide()
@@ -511,11 +517,11 @@ class Gui(object):
         fname = widget.get_filename()
         if data < 0:  # Cancel button or window closed
             return
-        assert data in (1, 2)  # OPEN and SAVE opcodes respectively
+        assert data in (1, 2)  # SAVE and OPEN opcodes respectively
         if data == 1:
-            pass
+            self.logic.project.save(fname)
         elif data == 2:
-            pass
+            self.logic.project.load(fname)
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

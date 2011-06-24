@@ -11,6 +11,7 @@ import math
 import time
 import datetime
 import clockmanager
+import project
 import supseq
 import clockface
 import virtualclock
@@ -69,6 +70,11 @@ class Logic(object):
     def __init__(self, swap_clock_callback, cface_modified_callback,
                  debug=False):
         self.clock_manager = clockmanager.ClockManager()
+
+        # Initialise the Project singleton and connects callbacks.
+        self.project = project.Project()
+        self.project.connect("project_updated", self.on_project_updated)
+
         # The program hasn't run a supersequence heuristic just yet...
         self.supersequence = None
         # The debug mode of using the class is command-line only...
@@ -276,6 +282,11 @@ class Logic(object):
         '''
         now = datetime.datetime.now()
         return (now.hour, now.minute)
+
+    def on_project_updated(self, widget, data=None):
+        print('Project updated!', data)
+        for k, v in data.items():
+            print(k, v)
 
     def switch_clock(self, widget, clock_name):
         '''
