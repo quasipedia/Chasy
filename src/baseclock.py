@@ -63,12 +63,14 @@ class Clock(object):
         representation of the time in the form HH:MM.
         '''
         phrases = []
+        # Generate phrases
         for h in range(24):
             for m in range(60):
                 phrase = ''
                 if with_numbers == True:
                     phrase += str(h).zfill(2) + ':' + str(m).zfill(2) + '  '
                 phrases.append(phrase + self.get_time_phrase(h, m))
+        # Check for uniqueness
         return phrases
 
 

@@ -8,7 +8,6 @@ import gtk
 import gobject
 import pango
 import logic
-import project
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -30,6 +29,8 @@ class Gui(gobject.GObject):
         # process the project data first
         self.logic.project.connect_after("project_updated",
                                          self.on_project_updated)
+        self.logic.project.connect("disk_operation_problem",
+                                   self.on_disk_operation_problem)
 
         self.gui_file = "../data/gui.xml"
         self.builder = gtk.Builder()
@@ -92,18 +93,26 @@ class Gui(gobject.GObject):
         self.sttng_approx_last = go("approx_last_step")
         self.sttng_mod_description = go("sttng_mod_description")
         self.sttng_mod_textbuffer = go("module_description_buffer")
-        self.__populate_settings()
 
         # FILE CHOOSER
         self.file_chooser_window = go("file_chooser")
         self.file_open_button = go("open_file_button")
         self.file_save_button = go("save_file_button")
 
+        # UNSAVED CHANGES DIAOLOGUE
+        self.unsaved_changes_dialogue = go("unsaved_changes_dialogue")
+
+        # ERROR MESSAGES DIALOGUE
+        self.error_message_dialogue = go("error_message_dialogue")
+
         # INIT VALUES AND STATUS!
         self.hours = 0
         self.minutes = 0
         self.keep_sync = False
         self.__set_safe_mode(True)
+        # We create a stack for dialogues to know how to resume operations
+        # once they got a response.
+        self.todo_after_dialogue = []
 
         self.main_window.show()
 
@@ -134,22 +143,29 @@ class Gui(gobject.GObject):
         filter that can change, so it needs to be performed not only at
         initialisation time.
         '''
+        if self.logic.project.is_populated():
+            mod = self.logic.project.project_settings['clock']
+        else:
+            mod = None
         index = self.sttng_modlang_combo.get_active()
         # first entry is in language box is '---' which is "no filter"
         lang = None if index == 0 else self.clock_languages_entries[index]
         cm = self.logic.clock_manager
         self.clock_modules_entries = cm.get_all_module_names(lang)
+        preset = 0 if mod == None else self.clock_modules_entries.index(mod)
         self.__populate_combo(self.sttng_modname_combo,
-                              self.clock_modules_entries, 0)
+                              self.clock_modules_entries, preset)
 
     def __populate_settings(self):
         '''
         Populate all the options in the setting window.
         '''
-        # Clock accuracy
-        self.resolution_entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
-        self.__populate_combo(self.sttng_accuracy_combo,
-                              self.resolution_entries, 0)
+        # Load current values:
+        if self.logic.project.is_populated():
+            res = self.logic.project.project_settings['resolution']
+            apx = self.logic.project.project_settings['approx_method']
+        else:
+            res = apx = None
         # Clock languages
         cm = self.logic.clock_manager
         self.clock_languages_entries = cm.get_all_languages()
@@ -158,6 +174,16 @@ class Gui(gobject.GObject):
                               self.clock_languages_entries, 0)
         # Clock modules
         self.__populate_clock_modules_combo()
+        # Clock resolution
+        self.resolution_entries = [1, 2, 3, 5, 10, 15, 20, 30 ,60]
+        preset = 0 if res == None else self.resolution_entries.index(res)
+        self.__populate_combo(self.sttng_accuracy_combo,
+                              self.resolution_entries, preset)
+        # Clock approximation method
+        if apx in (None, 'closest'):
+            self.sttng_approx_closest.set_active(True)
+        else:
+            self.sttng_approx_last.set_active(True)
 
     def __write_in_dump(self, what, how='ubuntu'):
         '''
@@ -252,6 +278,29 @@ class Gui(gobject.GObject):
         self.logic.get_sequence(callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
 
+    def _dialogue_post_processing(self):
+        '''
+        When a dialogue is activated, it might interrupt some other opertation.
+        This method resumes those. It must be manually called at the end of
+        each "on_response" handler.
+            todo_after_dialogue is a list used as a stack (LIFO).
+        '''
+        if not self.todo_after_dialogue:
+            return
+        op = self.todo_after_dialogue.pop()
+        if op == 'open':
+            self.on_file_open_activate(None)
+        elif op == 'new':
+            self.on_file_new_activate(None)
+        elif op == 'close':
+            self.on_file_close_activate(None)
+        elif op == 'quit':
+            self.on_main_window_delete_event(None)
+        elif op == 'save':
+            self.on_file_save_activate(None)
+        else:
+            raise Exception('Unknown operation in dialogue post-processing!')
+
     ##### SPECIAL HANDLERS #####
     # Special handlers are generic handlers or non GUI-generated handlers
 
@@ -281,6 +330,14 @@ class Gui(gobject.GObject):
         # (data==None means the project has been closed)
         self.update_text(reset=(data==None))
 
+    def on_disk_operation_problem(self, widget, data=None):
+        '''
+        This handles a signal from project, not from the GUI directly.
+        '''
+        data = ' '.join(data.split())
+        self.error_message_dialogue.set_markup(data)
+        self.error_message_dialogue.show()
+
     def on_close_no_destroy(self, widget, data=None):
         '''
         This handles closing any window but the the main program one.
@@ -295,7 +352,11 @@ class Gui(gobject.GObject):
 
     ##### MAIN WINDOW #####
 
-    def on_main_window_destroy(self, widget, data=None):
+    def on_main_window_delete_event(self, widget, data=None):
+        if self.logic.project.is_unsaved():
+            self.todo_after_dialogue.append('quit')
+            self.unsaved_changes_dialogue.show()
+            return True
         gtk.main_quit()
 
     def on_keep_in_sync_toggled(self, widget, data=None):
@@ -331,16 +392,20 @@ class Gui(gobject.GObject):
     def on_help_about_activate(self, widget, data=None):
         self.about_dialogue.show()
 
-    def on_file_save_as_activate(self, widget, data=None):
-        self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_SAVE)
-        self.file_open_button.hide()
-        self.file_save_button.show()
-        self.file_chooser_window.show()
-
-    def on_file_save_activate(self, widget, data=None):
-        self.on_file_save_as_activate(None)
+    def on_file_new_activate(self, widget, data=None):
+        if self.logic.project.is_unsaved():
+            self.todo_after_dialogue.append('new')
+            self.unsaved_changes_dialogue.show()
+            return
+        self.logic.project.close()
+        self.__populate_settings()
+        self.settings_window.show()
 
     def on_file_open_activate(self, widget, data=None):
+        if self.logic.project.is_unsaved():
+            self.todo_after_dialogue.APPEND('open')
+            self.unsaved_changes_dialogue.show()
+            return
         self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
         self.file_open_button.show()
         self.file_save_button.hide()
@@ -348,6 +413,18 @@ class Gui(gobject.GObject):
 
     def on_file_close_activate(self, widget, data=None):
         self.logic.project.close()
+
+    def on_file_save_as_activate(self, widget, data=None):
+        self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_SAVE)
+        self.file_open_button.hide()
+        self.file_save_button.show()
+        self.file_chooser_window.show()
+
+    def on_file_save_activate(self, widget, data=None):
+        if self.logic.project.last_save_fname == None:
+            self.on_file_save_as_activate(None)
+        else:
+            self.logic.project.save()
 
     def on_tools_dump_full_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
@@ -378,6 +455,7 @@ class Gui(gobject.GObject):
         self.cface_editor_window.show()
 
     def on_edit_settings_activate(self, widget, data=None):
+        self.__populate_settings()
         self.settings_window.show()
 
     ##### DUMP WINDOW #####
@@ -539,9 +617,6 @@ class Gui(gobject.GObject):
 
     ##### PROJECT SETTINGS #####
 
-    def on_file_new_activate(self, widget, data=None):
-        self.settings_window.show()
-
     def on_sttng_module_lang_combo_changed(self, widget, data=None):
         self.__populate_clock_modules_combo()
 
@@ -581,7 +656,28 @@ class Gui(gobject.GObject):
         if data == 1:
             self.logic.project.save(fname)
         elif data == 2:
-            self.logic.project.load(fname)
+            installed_modules = self.logic.clock_manager.get_all_module_names()
+            self.logic.project.load(fname, installed_modules)
+        self._dialogue_post_processing()
+
+    ##### UNSAVED CHANGES DIALOGUE #####
+
+    def on_unsaved_changes_dialogue_response(self, widget, data=None):
+        widget.hide()
+        # First do the action the user selected...
+        if data < 0:  # Cancel button
+            self.todo_after_dialogue.pop()  #remove expected post-processing
+        elif data == 0:  # Discard changes
+            self.logic.project.close()
+        elif data == 1:  # Save
+            self.logic.project.close()
+            self.todo_after_dialogue.append('save')
+        self._dialogue_post_processing()
+
+    ##### ERROR MESSAGES DIALOGUE #####
+
+    def on_error_message_dialogue_response(self, widget, data=None):
+        self.error_message_dialogue.hide()
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

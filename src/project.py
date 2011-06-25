@@ -67,20 +67,25 @@ class Project(gobject.GObject):
             dict_[pr] = getattr(self, pr)
         return dict_
 
-    def broadcast_change(self):
+    def broadcast_change(self, skip_flag_setting=False):
         '''
-        This generator check against the last saved state of the SAVE_MASK
-        properties and the one of the project when __broadcast is called.
-            If the state is changed, it emits the signal "project_updated" with
-        a dictionary of the properties that have changed as a parameter.
-            It also set the "unsaved_flag" to True.
-        Return True if the state of the project has changed.
+        Check current values of the properties in SAVE_MASK against their
+        values on last broadcast_change call. If the state is changed, it emits
+        the signal "project_updated" with a dictionary of the properties that
+        have changed as a parameter.
+            It also set the "unsaved_flag" to True, unless the parameter
+        'skip_flag_setting' is set to True (useful for when project is first
+        loaded).
+            Return True if the state of the project has changed.
         '''
         has_changed = False
         new_state = self.__get_masked_dict()
+        print(self.saved_state)
+        print(new_state)
         if self.saved_state != new_state:
             has_changed = True
-            self.unsaved_flag = True
+            if not skip_flag_setting:
+                self.unsaved_flag = True
             data = {}
             for pr in self.SAVE_MASK:
                 if self.saved_state[pr] != new_state[pr]:
@@ -123,7 +128,7 @@ class Project(gobject.GObject):
         uses the name used on the last save operation.
         '''
         # If the file have not been given an extension, uses the default one
-        if '.' not in os.path.split(fname)[1]:
+        if fname and '.' not in os.path.split(fname)[1]:
             fname += '.' + self.DEFAULT_EXTENSION
         # Automatic save (no file name selection)
         if fname == None:
@@ -132,28 +137,71 @@ class Project(gobject.GObject):
         prj = dict()
         for property in self.SAVE_MASK:
             prj[property] = getattr(self, property)
-        file_ = open(fname, 'w')
+        try:
+            file_ = open(fname, 'w')
+        except:
+            problem_description = '''It was <b>impossible to open the requested
+                file</b>. Hint: are you sure the saved file has the right
+                permissions for <i>Chasy</i> to open it?'''
+            self.emit("disk_operation_problem", problem_description)
+            return -1
         # Protocol 0 (default one *will* generate problems with cyclic
         # reference of sequence and elements.
         pickle.dump(prj, file_, pickle.HIGHEST_PROTOCOL)
         file_.close()
         self.last_save_fname = fname
         self.unsaved_flag = False
+        # Need to call this to update main window title
+        self.emit("project_updated", None)
 
-    def load(self, fname):
+    def load(self, fname, installed_modules):
         '''
         Load a project from disk and regenerate the environment to match it.
+        'installed_modules' is a list of the installed clock modules on the
+        system. Trying to load a project based on an uninstalled module will
+        generate a non fatal error.
         '''
         self.__reset_project()
-        file_ = open(fname, 'r')
-        prj = pickle.load(file_)
+        try:
+            file_ = open(fname, 'r')
+        except:
+            problem_description = '''It was <b>impossible to open the requested
+                file</b>. Hint: are you sure the saved file has the right
+                permissions for <i>Chasy</i> to open it?'''
+            self.emit("disk_operation_problem", problem_description)
+            return -1
+        try:
+            prj = pickle.load(file_)
+        except:
+            problem_description = '''Although it was possible to open the
+                project file, it was <b>impossible to decode the data</b> in
+                it. Hint: are you sure the saved file is a <i>Chasy</i>
+                project?'''
+            self.emit("disk_operation_problem", problem_description)
+            return -1
         file_.close()
         # Schema version compatibility check (mostly for future!)
-        assert prj['SCHEMA_VERSION'] == self.SCHEMA_VERSION
+        if prj['SCHEMA_VERSION'] != self.SCHEMA_VERSION:
+            problem_description = '''The project is saved with a <b>schema
+                version</b> (%s) which is incompatible with the one of the
+                version of <i>Chasy</i> in use on this system.''' % \
+                prj['SCHEMA_VERSION']
+            self.emit("disk_operation_problem", problem_description)
+            return -1
         del prj['SCHEMA_VERSION']
+        # Verify required module is installed
+        required = prj['project_settings']['clock']
+        if required not in installed_modules:
+            problem_description = '''The saved project is based the <b>"%s"
+                clock module</b>, which is not installed on the system in use.
+                ''' % required
+            self.emit("disk_operation_problem", problem_description)
+            return -1
         for property in prj:
             setattr(self, property, prj[property])
-        self.broadcast_change()
+        self.last_save_fname = fname
+        self.unsaved_flag = False
+        self.broadcast_change(skip_flag_setting=True)
 
     def close(self):
         '''
@@ -168,6 +216,8 @@ class Project(gobject.GObject):
 # These lines register specific signals into the GObject framework.
 gobject.type_register(Project)
 gobject.signal_new("project_updated", Project, gobject.SIGNAL_RUN_FIRST,
+                   gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+gobject.signal_new("disk_operation_problem", Project, gobject.SIGNAL_RUN_FIRST,
                    gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
 
 
