@@ -45,6 +45,7 @@ class Project(gobject.GObject):
     def __init__(self):
         self.__gobject_init__()
         self.__reset_project()
+        self.unsaved_flag = False
 
     def __reset_project(self):
         '''
@@ -55,6 +56,7 @@ class Project(gobject.GObject):
                 setattr(self, property, None)
         self.saved_state = self.__get_masked_dict()
         self.last_save_fname = None
+        self.unsaved_flag = False
 
     def __get_masked_dict(self):
         '''
@@ -69,31 +71,51 @@ class Project(gobject.GObject):
         '''
         This generator check against the last saved state of the SAVE_MASK
         properties and the one of the project when __broadcast is called.
-        If the state is changed, it emits the signal "project_updated" with
-        a dictionary of the properties that have changed.
+            If the state is changed, it emits the signal "project_updated" with
+        a dictionary of the properties that have changed as a parameter.
+            It also set the "unsaved_flag" to True.
         Return True if the state of the project has changed.
         '''
-        while True:
-            has_changed = False
-            new_state = self.__get_masked_dict()
-            if self.saved_state != new_state:
-                has_changed = True
-                data = {}
-                for pr in self.SAVE_MASK:
-                    if self.saved_state[pr] != new_state[pr]:
-                        data[pr] = new_state[pr]
-                self.saved_state = new_state
-                self.emit("project_updated", data)
-            return has_changed
+        has_changed = False
+        new_state = self.__get_masked_dict()
+        if self.saved_state != new_state:
+            has_changed = True
+            self.unsaved_flag = True
+            data = {}
+            for pr in self.SAVE_MASK:
+                if self.saved_state[pr] != new_state[pr]:
+                    data[pr] = new_state[pr]
+            self.saved_state = new_state
+            self.emit("project_updated", data)
+        return has_changed
 
     def is_populated(self):
         '''
         Return True if the project is populated.
         '''
         for pr in self.SAVE_MASK:
-            if getattr(self, pr) != None:
+            if pr != 'SCHEMA_VERSION' and getattr(self, pr) != None:
                 return True
         return False
+
+    def is_unsaved(self):
+        '''
+        Return True if the project has unsaved changes.
+        '''
+        return self.unsaved_flag
+
+    def get_project_name(self):
+        '''
+        Return a suitable project name for the project.
+        (Typically used in the main window title
+        '''
+        if not self.is_populated():
+            return None
+        if self.last_save_fname == None:
+            name = '<new project>'
+        else:
+            name = os.path.split(self.last_save_fname)[1]
+        return name
 
     def save(self, fname=None):
         '''
@@ -116,6 +138,7 @@ class Project(gobject.GObject):
         pickle.dump(prj, file_, pickle.HIGHEST_PROTOCOL)
         file_.close()
         self.last_save_fname = fname
+        self.unsaved_flag = False
 
     def load(self, fname):
         '''
@@ -126,11 +149,20 @@ class Project(gobject.GObject):
         prj = pickle.load(file_)
         file_.close()
         # Schema version compatibility check (mostly for future!)
-#        assert prj['SCHEMA_VERSION'] == self.SCHEMA_VERSION
-#        del prj['SCHEMA_VERSION']
+        assert prj['SCHEMA_VERSION'] == self.SCHEMA_VERSION
+        del prj['SCHEMA_VERSION']
         for property in prj:
             setattr(self, property, prj[property])
         self.broadcast_change()
+
+    def close(self):
+        '''
+        Close the current project.
+        Note that the parameter for the signal is "None" and is a special case
+        that each handler must process correctly.
+        '''
+        self.__reset_project()
+        self.emit("project_updated", None)
 
 
 # These lines register specific signals into the GObject framework.

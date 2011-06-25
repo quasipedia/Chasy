@@ -295,6 +295,11 @@ class Logic(object):
         Process the project changes. "data" is a dictionary of properties,
         see the "Project" class in the project module for details.
         '''
+        # If the project has been closed...
+        if data == None:
+            self.clock = None
+            return
+        # If there is a project
         for k, v in data.items():
             if k == 'project_settings':
                 self.process_project_settings(v)

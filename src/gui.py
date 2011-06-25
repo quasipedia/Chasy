@@ -8,6 +8,7 @@ import gtk
 import gobject
 import pango
 import logic
+import project
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -263,8 +264,22 @@ class Gui(gobject.GObject):
         # Make sense to display clockface editor and virtual clock?
         if widget.supersequence == None:
             self.__show_vclock_elements(False)
+        # Always hide the dump window (it's a scratch pad, we really don't
+        # know what's in it...
         self.dump_window.hide()
-        self.update_text()
+        # Update main window title
+        title = 'Chasy - '
+        prj_name = self.logic.project.get_project_name()
+        if prj_name == None:
+            title += 'Word clock development platform'
+        else:
+            if self.logic.project.is_unsaved():
+                title += '*'
+            title += prj_name
+        self.main_window.set_title(title)
+        # Update the main window displayed text
+        # (data==None means the project has been closed)
+        self.update_text(reset=(data==None))
 
     def on_close_no_destroy(self, widget, data=None):
         '''
@@ -324,15 +339,15 @@ class Gui(gobject.GObject):
 
     def on_file_save_activate(self, widget, data=None):
         self.on_file_save_as_activate(None)
-#        self.logic.save_project()
 
     def on_file_open_activate(self, widget, data=None):
         self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
         self.file_open_button.show()
         self.file_save_button.hide()
         self.file_chooser_window.show()
-#        self.logic.load_project()
-#        self.cface_editor_window.hide()
+
+    def on_file_close_activate(self, widget, data=None):
+        self.logic.project.close()
 
     def on_tools_dump_full_activate(self, widget, data=None):
         text = '\n'.join(self.logic.clock.get_phrases_dump(True))
