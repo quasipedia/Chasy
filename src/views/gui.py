@@ -7,7 +7,7 @@ Chasy's Graphic User Interface and callbacks.
 import gtk
 import gobject
 import pango
-import logic
+import controllers.core
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -24,7 +24,7 @@ class Gui(gobject.GObject):
     '''
 
     def __init__(self):
-        self.logic = logic.Logic()
+        self.logic = controllers.core.Core()
         # Connect after, because the Gui() needs Logic() handlers to
         # process the project data first
         self.logic.project.connect_after("project_updated",
@@ -271,10 +271,9 @@ class Gui(gobject.GObject):
         "of the language in use, is sometimes possible to manually improve " +
         "the automatic solution.")
         self.msa_progress_bar.set_fraction(0)
-        self.heuristic_dialogue.show()
-        while gtk.events_pending():
-            gtk.main_iteration(False)
         self.logic.get_sequence(callback=self.__update_msa_progress_values)
+        self.heuristic_dialogue.show()
+        self.heuristic_dialogue.run()
         self.heuristic_dialogue.hide()
 
     def __check_need_saving(self):
@@ -339,7 +338,6 @@ class Gui(gobject.GObject):
 
     def on_main_window_delete_event(self, widget, data=None):
         if self.logic.project.is_unsaved():
-            self.todo_after_dialogue.append('quit')
             self.unsaved_changes_dialogue.show()
             return True
         gtk.main_quit()
@@ -433,6 +431,9 @@ class Gui(gobject.GObject):
                                   self.col_number_adjustment,
                                   self.update_clockface_stats)
         self.cface_editor_window.show()
+        self.logic.generate_vclock(self.vclock_cface)
+        self.logic.vclock.update()
+
 
     def on_edit_settings_activate(self, widget, data=None):
         self.__populate_settings()
@@ -499,18 +500,14 @@ class Gui(gobject.GObject):
         "one</b>, but further optimisation - if at all possible - is " +
         "usually trivial for humans.")
         self.heuristic_dialogue.show()
-        while gtk.events_pending():
-            gtk.main_iteration(False)
         self.logic.cface.bin_pack(heur_callback=\
                                   self.__update_msa_progress_values)
+        self.heuristic_dialogue.run()
         self.heuristic_dialogue.hide()
-
-    def on_cfe_generate_virtual_clicked(self, widget, data=None):
-        self.logic.generate_vclock(self.vclock_cface)
-        self.logic.vclock.update()
+        self.logic.project.broadcast_change()
 
     def on_cfe_generate_code_clicked(self, widget, data=None):
-        text = self.logic.supersequence.set_led_strings()
+        text = self.logic.project.supersequence.set_led_strings()
         self.__write_in_dump(text)
         self.dump_window.show()
 

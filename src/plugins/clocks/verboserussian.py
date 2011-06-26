@@ -8,7 +8,7 @@ expressions (e.g.: "midnight" or "noon" instead of "twelve"). Sentences
 are maybe redundant in their formulation but are correct.
 '''
 
-import baseclock
+import models.baseclock
 
 __author__ = "Mac Ryan"
 __credits__ = ["Olga Andronova"]
@@ -19,7 +19,7 @@ __email__ = "quasipedia@gmail.com"
 __status__ = "Stable"
 
 
-class Clock(baseclock.Clock):
+class Clock(models.baseclock.Clock):
 
     '''
     Russian verbose clock.

@@ -9,7 +9,7 @@ order and no words concatenated.
 '''
 
 import gtk
-import svg
+import libs.svg as svg
 import rsvg
 import math
 import cairo
@@ -65,7 +65,7 @@ class Tile(object):
         self.width = self.text_size * len(self.selem.word)
         #rectangle
         self.items.append(svg.Rectangle((self.x, self.y), self.height,
-                                        self.width, self.tile_color))
+                                              self.width, self.tile_color))
         #text
         for i, letter in enumerate(self.selem.word):
             x_letter = self.x + i*self.text_size + self.text_size/4

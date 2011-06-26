@@ -4,7 +4,7 @@
 Clock plugin providing sentences in standard English.
 '''
 
-import baseclock
+import models.baseclock
 
 __author__ = "Mac Ryan"
 __copyright__ = "Copyright 2011, Mac Ryan"
@@ -14,7 +14,7 @@ __email__ = "quasipedia@gmail.com"
 __status__ = "Stable"
 
 
-class Clock(baseclock.Clock):
+class Clock(models.baseclock.Clock):
 
     '''
     Plain English clock.

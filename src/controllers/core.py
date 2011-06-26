@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 '''
 Core logic for the Chasy program.
+
+This is the main Controller (as in the MVC architectural pattern) for Chasy.
+It co-ordinates the various views and models of Chasy.
 '''
 
 import textwrap
@@ -10,11 +13,11 @@ import difflib
 import math
 import time
 import datetime
-import clockmanager
-import project
-import supseq
-import clockface
-import virtualclock
+import models.clockmanager
+import models.project
+import models.supseq
+import models.clockface
+import models.virtualclock
 
 
 __author__ = "Mac Ryan"
@@ -60,7 +63,7 @@ class ExtendedSequenceMatcher(difflib.SequenceMatcher):
                 matching_seqs.append(self.a[code[1]:code[2]])
         return (self.ratio(), tuple(matching_seqs), tuple(codes))
 
-class Logic(object):
+class Core(object):
 
     '''
     Contains all the logic needed for the program to run, except the language
@@ -68,14 +71,15 @@ class Logic(object):
     '''
 
     def __init__(self, debug=False):
-        self.clock_manager = clockmanager.ClockManager()
+        self.clock_manager = models.clockmanager.ClockManager()
 
         # Initialise the Project singleton and connects callbacks.
-        self.project = project.Project()
+        self.project = models.project.Project()
         self.project.connect("project_updated", self.on_project_updated)
 
-        # The program hasn't run a supersequence heuristic just yet...
-        self.supersequence = None
+        # Initialise attributes
+        self.vclock = None
+
         # The debug mode of using the class is command-line only...
         if debug == True:
             return
@@ -105,8 +109,8 @@ class Logic(object):
 
     def _get_combination_number(self, pool_size, sample_size):
         '''
-        Return the number of sample_size big combinations without repetition that
-        can be formed from a pool of pool_size).
+        Return the number of sample_size big combinations without repetition
+        that can be formed from a pool of pool_size).
         '''
         f = lambda x: math.factorial(x)
         return f(pool_size)/(f(sample_size)*f(pool_size - sample_size))
@@ -300,23 +304,13 @@ class Logic(object):
             self.clock = None
             return
         # If there is a project
+        print('obvious')
         for k, v in data.items():
             if k == 'project_settings':
                 self.process_project_settings(v)
-
-    def switch_clock(self, widget, clock_name):
-        '''
-        Swap between different clock modules.
-        Refresh the screen and clear cached values as needed.
-        '''
-        if widget.get_active():
-            self.clock = self.available_modules[clock_name].Clock()
-            try:
-                self.swap_clock_callback()
-            # If invoked during the __init__, the callback won't work!! So...
-            except AttributeError:
-                pass
-            self.supersequence = None
+            elif k == 'supersequence' and self.vclock:
+                print('less obvious')
+                self.vclock = self.generate_vclock(self.vclock.drawing_area)
 
     def get_phrases_analysis(self):
         '''
@@ -404,8 +398,8 @@ class Logic(object):
         '''
         # It's a long job! If already done, don't re-do it unless specifically
         # told so!
-        if self.supersequence and force_rerun == False:
-            return self.supersequence
+        if self.project.supersequence and force_rerun == False:
+            return self.project.supersequence
         # No phrases means... all phrases!!!
         if phrases == None:
             phrases = self.clock.get_phrases_dump()
@@ -452,10 +446,12 @@ class Logic(object):
                 break
         # FINE REDUNDANCY OPTIMISATION
         callback(phase='Fine redundancy loop', time='This is the last step!')
-        self.supersequence = supseq.SuperSequence(sequence, original_phrases)
-        self.supersequence.eliminate_redundancies(callback)
+        self.project.supersequence = \
+            models.supseq.SuperSequence(sequence, original_phrases)
+        self.project.supersequence.eliminate_redundancies(callback)
+        self.project.broadcast_change()
         # DONE!
-        return self.supersequence
+        return self.project.supersequence
 
     def coarse_redundancy_filter(self, sequence, phrases):
         '''
@@ -486,11 +482,11 @@ class Logic(object):
         # Preliminary dimensional calculations
         seq = self.get_sequence()
         # Go!
-        self.cface = clockface.ClockFace(seq, clockface_image,
+        self.cface = models.clockface.ClockFace(seq, clockface_image,
                                          col_num_adjustment,
                                          stats_callback=stats_callback)
         col_num_adjustment.set_lower(\
-                        self.supersequence.get_lenght_longest_elem())
+                        self.project.supersequence.get_lenght_longest_elem())
         self.cface.display()
 
     def manipulate_clockface(self, kv):
@@ -524,8 +520,8 @@ class Logic(object):
         Generate the virtual clock.
         '''
         vclock_data = self.cface.get_char_sequence()
-        vclock_data['drawing_area']  = drawing_area
-        self.vclock = virtualclock.VirtualClock(**vclock_data)
+        vclock_data['drawing_area'] = drawing_area
+        self.vclock = models.virtualclock.VirtualClock(**vclock_data)
 
 def run_as_script():
     '''Run this code if the file is executed as script.'''

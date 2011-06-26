@@ -45,8 +45,8 @@ class VirtualClock(unicode):
         cls.unlit_color = gtk.gdk.Color("#888")
         cls.lit_color = gtk.gdk.Color("#FFF")
         cls.custom_color = gtk.gdk.Color("#800")
-        drawing_area.set_size_request(cls.min_pixel_dimension,
-                                      cls.min_pixel_dimension)
+        cls.drawing_area.set_size_request(cls.min_pixel_dimension,
+                                          cls.min_pixel_dimension)
         return super(VirtualClock, cls).__new__(cls, chars)
 
     @staticmethod
