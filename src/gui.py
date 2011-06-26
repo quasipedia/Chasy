@@ -110,9 +110,6 @@ class Gui(gobject.GObject):
         self.minutes = 0
         self.keep_sync = False
         self.__set_safe_mode(True)
-        # We create a stack for dialogues to know how to resume operations
-        # once they got a response.
-        self.todo_after_dialogue = []
 
         self.main_window.show()
 
@@ -261,7 +258,7 @@ class Gui(gobject.GObject):
         elif self.logic.project.supersequence != None:
             self.__show_vclock_elements(True)
 
-    def _supersequence_heuristics_show_dialogue(self):
+    def __supersequence_heuristics_show_dialogue(self):
         '''
         Display the heuristics dialogue when computing the supersequence.
         '''
@@ -275,31 +272,19 @@ class Gui(gobject.GObject):
         "the automatic solution.")
         self.msa_progress_bar.set_fraction(0)
         self.heuristic_dialogue.show()
+        while gtk.events_pending():
+            gtk.main_iteration(False)
         self.logic.get_sequence(callback=self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
 
-    def _dialogue_post_processing(self):
+    def __check_need_saving(self):
         '''
-        When a dialogue is activated, it might interrupt some other opertation.
-        This method resumes those. It must be manually called at the end of
-        each "on_response" handler.
-            todo_after_dialogue is a list used as a stack (LIFO).
+        Check if there are unsaved changes in the current project and ask
+        what to do about them.
         '''
-        if not self.todo_after_dialogue:
-            return
-        op = self.todo_after_dialogue.pop()
-        if op == 'open':
-            self.on_file_open_activate(None)
-        elif op == 'new':
-            self.on_file_new_activate(None)
-        elif op == 'close':
-            self.on_file_close_activate(None)
-        elif op == 'quit':
-            self.on_main_window_delete_event(None)
-        elif op == 'save':
-            self.on_file_save_activate(None)
-        else:
-            raise Exception('Unknown operation in dialogue post-processing!')
+        if self.logic.project.is_unsaved():
+            self.unsaved_changes_dialogue.show()
+            self.unsaved_changes_dialogue.run()
 
     ##### SPECIAL HANDLERS #####
     # Special handlers are generic handlers or non GUI-generated handlers
@@ -393,19 +378,13 @@ class Gui(gobject.GObject):
         self.about_dialogue.show()
 
     def on_file_new_activate(self, widget, data=None):
-        if self.logic.project.is_unsaved():
-            self.todo_after_dialogue.append('new')
-            self.unsaved_changes_dialogue.show()
-            return
+        self.__check_need_saving()
         self.logic.project.close()
         self.__populate_settings()
         self.settings_window.show()
 
     def on_file_open_activate(self, widget, data=None):
-        if self.logic.project.is_unsaved():
-            self.todo_after_dialogue.APPEND('open')
-            self.unsaved_changes_dialogue.show()
-            return
+        self.__check_need_saving()
         self.file_chooser_window.set_action(gtk.FILE_CHOOSER_ACTION_OPEN)
         self.file_open_button.show()
         self.file_save_button.hide()
@@ -419,6 +398,7 @@ class Gui(gobject.GObject):
         self.file_open_button.hide()
         self.file_save_button.show()
         self.file_chooser_window.show()
+        self.file_chooser_window.run()
 
     def on_file_save_activate(self, widget, data=None):
         if self.logic.project.last_save_fname == None:
@@ -519,6 +499,8 @@ class Gui(gobject.GObject):
         "one</b>, but further optimisation - if at all possible - is " +
         "usually trivial for humans.")
         self.heuristic_dialogue.show()
+        while gtk.events_pending():
+            gtk.main_iteration(False)
         self.logic.cface.bin_pack(heur_callback=\
                                   self.__update_msa_progress_values)
         self.heuristic_dialogue.hide()
@@ -658,7 +640,6 @@ class Gui(gobject.GObject):
         elif data == 2:
             installed_modules = self.logic.clock_manager.get_all_module_names()
             self.logic.project.load(fname, installed_modules)
-        self._dialogue_post_processing()
 
     ##### UNSAVED CHANGES DIALOGUE #####
 
@@ -670,9 +651,7 @@ class Gui(gobject.GObject):
         elif data == 0:  # Discard changes
             self.logic.project.close()
         elif data == 1:  # Save
-            self.logic.project.close()
-            self.todo_after_dialogue.append('save')
-        self._dialogue_post_processing()
+            self.on_file_save_activate(None)
 
     ##### ERROR MESSAGES DIALOGUE #####
 

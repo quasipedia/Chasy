@@ -80,8 +80,6 @@ class Project(gobject.GObject):
         '''
         has_changed = False
         new_state = self.__get_masked_dict()
-        print(self.saved_state)
-        print(new_state)
         if self.saved_state != new_state:
             has_changed = True
             if not skip_flag_setting:
